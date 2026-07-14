@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Plataforma Operacional NAC | Marista</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Montserrat',sans-serif}
+:root{
+  --azul:#002B7F;--azul-h:#001F5C;--azul-l:#E8EDF8;--azul-m:#4A6BBF;
+  --red:#E31837;--red-l:#FDEAED;
+  --green:#1D7A55;--green-l:#E3F5EE;
+  --amber:#B86A00;--amber-l:#FEF3E2;
+  --white:#fff;--gray:#F4F5F8;--border:#C8D0E8;
+  --text:#1A1A2E;--muted:#5A6480;
+}
+body{background:var(--gray);min-height:100vh;padding:0}
+.app{max-width:960px;margin:0 auto;padding:12px 14px 40px}
+
+/* BRAND */
+.brand-bar{background:var(--azul);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.brand-logo{width:36px;height:36px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--azul);flex-shrink:0}
+.brand-title{color:white;font-size:14px;font-weight:700}
+.brand-sub{color:rgba(255,255,255,.6);font-size:10px;font-weight:500;margin-top:1px;text-transform:uppercase;letter-spacing:.5px}
+.brand-date{margin-left:auto;color:rgba(255,255,255,.7);font-size:11px;font-weight:600}
+
+/* TABS */
+.tab-bar{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.tab-bar::-webkit-scrollbar{height:3px}
+.tab-bar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.tab-btn{padding:9px 16px;font-size:11px;font-weight:700;font-family:'Montserrat',sans-serif;border:1.5px solid var(--border);border-radius:8px;background:white;color:var(--muted);cursor:pointer;white-space:nowrap;letter-spacing:.3px;text-transform:uppercase;transition:all .15s;flex-shrink:0}
+.tab-btn.active{background:var(--azul);color:white;border-color:var(--azul)}
+.tab-btn:hover:not(.active){border-color:var(--azul);color:var(--azul)}
+
+/* PANELS */
+.panel{display:none}.panel.active{display:block}
+
+/* SECTION HEADER */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.sec-title{font-size:15px;font-weight:700;color:var(--azul)}
+.sec-sub{font-size:11px;color:var(--muted);margin-top:2px;font-weight:500}
+.btn-add{padding:9px 16px;background:var(--azul);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;letter-spacing:.3px;display:flex;align-items:center;gap:6px}
+.btn-add:active{background:var(--azul-h)}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.kpi-card{background:var(--azul);border-radius:10px;padding:12px 14px}
+.kpi-n{font-size:26px;font-weight:700;color:white;line-height:1}
+.kpi-l{font-size:9px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.7px;margin-top:3px;font-weight:600}
+.kpi-card.amber{background:var(--amber)}
+.kpi-card.red{background:var(--red)}
+.kpi-card.green{background:var(--green)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.fi{flex:1;min-width:140px;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;background:white;font-family:'Montserrat',sans-serif;font-size:13px;color:var(--text);outline:none}
+.fi:focus{border-color:var(--azul)}
+.fsel{padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;background:white;font-family:'Montserrat',sans-serif;font-size:13px;color:var(--text);outline:none;cursor:pointer}
+.fsel:focus{border-color:var(--azul)}
+
+/* CARDS LIST */
+.cards-list{display:flex;flex-direction:column;gap:10px}
+.card{background:white;border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
+.card-head{padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;cursor:pointer}
+.card-head:hover{background:var(--gray)}
+.card-title{font-size:13px;font-weight:700;color:var(--text);line-height:1.3}
+.card-meta{font-size:10px;color:var(--muted);margin-top:3px;font-weight:500;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.card-actions{display:flex;gap:6px;flex-shrink:0}
+.btn-icon{background:none;border:1.5px solid var(--border);border-radius:7px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s}
+.btn-icon:hover{border-color:var(--azul);color:var(--azul)}
+.btn-icon.danger:hover{border-color:var(--red);color:var(--red)}
+.card-body{padding:12px 14px;border-top:1px solid var(--border);display:none}
+.card-body.open{display:block}
+.card-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cd-row{padding:5px 0;border-bottom:1px solid var(--gray);display:flex;flex-direction:column;gap:2px}
+.cd-row:last-child{border-bottom:none}
+.cd-label{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.cd-val{font-size:12px;font-weight:600;color:var(--text)}
+.cd-obs{background:var(--gray);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--text);margin-top:8px;line-height:1.5}
+
+/* STATUS BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.badge-blue{background:var(--azul-l);color:var(--azul)}
+.badge-green{background:var(--green-l);color:var(--green)}
+.badge-amber{background:var(--amber-l);color:var(--amber)}
+.badge-red{background:var(--red-l);color:var(--red)}
+.badge-gray{background:#E8E8EE;color:var(--muted)}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:32px 20px;color:var(--muted);font-size:12px;font-weight:500;background:white;border-radius:10px;border:1.5px solid var(--border)}
+.empty-icon{font-size:32px;margin-bottom:8px}
+
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0}
+@media(min-width:600px){.ov{align-items:center;padding:16px}}
+.modal{background:white;border-radius:14px 14px 0 0;width:100%;max-width:560px;max-height:92vh;overflow-y:auto}
+@media(min-width:600px){.modal{border-radius:14px}}
+.modal-head{background:var(--azul);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-radius:14px 14px 0 0;position:sticky;top:0;z-index:1}
+.modal-title{color:white;font-size:14px;font-weight:700}
+.modal-close{background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer;font-family:'Montserrat',sans-serif;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:16px;display:flex;flex-direction:column;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select,.form-textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Montserrat',sans-serif;font-size:13px;color:var(--text);background:white;outline:none;transition:border-color .15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--azul)}
+.form-textarea{resize:vertical;min-height:70px;line-height:1.5}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-save{width:100%;padding:13px;background:var(--azul);color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;letter-spacing:.3px;margin-top:4px}
+.btn-save:active{background:var(--azul-h)}
+.btn-save.green{background:var(--green)}
+.btn-save.amber{background:var(--amber)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--azul);color:white;padding:10px 20px;border-radius:8px;font-size:12px;font-weight:700;z-index:999;display:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,43,127,.25)}
+.toast.green{background:var(--green)}
+.toast.red{background:var(--red)}
+
+/* CONFIRM */
+.confirm-box{background:white;border-radius:14px;width:100%;max-width:340px;overflow:hidden}
+.confirm-head{background:var(--red);padding:14px 16px}
+.confirm-head h3{color:white;font-size:13px;font-weight:700;margin:0}
+.confirm-body{padding:16px}
+.confirm-msg{font-size:13px;color:var(--text);margin-bottom:16px;line-height:1.5}
+.confirm-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-cancel-conf{padding:11px;background:var(--gray);border:none;border-radius:8px;font-size:12px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;color:var(--muted)}
+.btn-del-conf{padding:11px;background:var(--red);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer}
+
+/* TIMELINE (substituições) */
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray)}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.tl-content{flex:1}
+.tl-title{font-size:12px;font-weight:700;color:var(--text)}
+.tl-meta{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* FORNECEDORES */
+.forn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.forn-card{background:white;border:1.5px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.forn-name{font-size:13px;font-weight:700;color:var(--text)}
+.forn-tipo{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.forn-contact{font-size:12px;color:var(--azul);font-weight:600;display:flex;align-items:center;gap:6px}
+.forn-actions{display:flex;gap:6px;margin-top:4px}
+.btn-wpp{padding:8px 12px;background:#25D366;color:white;border:none;border-radius:7px;font-size:11px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer;flex:1}
+.btn-edit-forn{padding:8px 12px;background:var(--azul-l);color:var(--azul);border:none;border-radius:7px;font-size:11px;font-weight:700;font-family:'Montserrat',sans-serif;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- BRAND -->
+<div class="brand-bar">
+  <div class="brand-logo">M</div>
+  <div>
+    <div class="brand-title">Plataforma Operacional NAC</div>
+    <div class="brand-sub">Colégio Marista Águas Claras</div>
+  </div>
+  <div class="brand-date" id="brand-date"></div>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="setTab('jogos')">🏆 Jogos</button>
+  <button class="tab-btn" onclick="setTab('transporte')">🚌 Transporte</button>
+  <button class="tab-btn" onclick="setTab('subs')">🔄 Substituições</button>
+  <button class="tab-btn" onclick="setTab('fornecedores')">📋 Fornecedores</button>
+</div>
+
+<!-- ═══════════════════════ JOGOS ═══════════════════════ -->
+<div class="panel active" id="panel-jogos">
+  <div class="sec-head">
+    <div>
+      <div class="sec-title">Calendário de Jogos</div>
+      <div class="sec-sub">Eventos, competições e datas dos jogos</div>
+    </div>
+    <button class="btn-add" onclick="openModal('jogo')">+ Novo Jogo</button>
+  </div>
+  <div class="kpi-row" id="kpi-jogos"></div>
+  <div class="filter-bar">
+    <input class="fi" id="q-jogos" placeholder="🔍 Buscar jogo ou modalidade..." oninput="renderJogos()">
+    <select class="fsel" id="f-jogos-status" onchange="renderJogos()">
+      <option value="">Todos os status</option>
+      <option value="Confirmado">Confirmado</option>
+      <option value="Pendente">Pendente</option>
+      <option value="Cancelado">Cancelado</option>
+      <option value="Realizado">Realizado</option>
+    </select>
+    <select class="fsel" id="f-jogos-mod" onchange="renderJogos()">
+      <option value="">Todas as modalidades</option>
+    </select>
+  </div>
+  <div id="list-jogos"></div>
+</div>
+
+<!-- ═══════════════════════ TRANSPORTE ═══════════════════════ -->
+<div class="panel" id="panel-transporte">
+  <div class="sec-head">
+    <div>
+      <div class="sec-title">Controle de Transporte</div>
+      <div class="sec-sub">Reservas, fornecedores e confirmações</div>
+    </div>
+    <button class="btn-add" onclick="openModal('transporte')">+ Nova Reserva</button>
+  </div>
+  <div class="kpi-row" id="kpi-transporte"></div>
+  <div class="filter-bar">
+    <input class="fi" id="q-transporte" placeholder="🔍 Buscar evento ou fornecedor..." oninput="renderTransporte()">
+    <select class="fsel" id="f-transp-status" onchange="renderTransporte()">
+      <option value="">Todos os status</option>
+      <option value="Reservado">Reservado</option>
+      <option value="Confirmado">Confirmado</option>
+      <option value="Pendente">Pendente</option>
+      <option value="Cancelado">Cancelado</option>
+    </select>
+  </div>
+  <div id="list-transporte"></div>
+</div>
+
+<!-- ═══════════════════════ SUBSTITUIÇÕES ═══════════════════════ -->
+<div class="panel" id="panel-subs">
+  <div class="sec-head">
+    <div>
+      <div class="sec-title">Substituições</div>
+      <div class="sec-sub">Registro de ausências e substituições de professores</div>
+    </div>
+    <button class="btn-add" onclick="openModal('sub')">+ Registrar</button>
+  </div>
+  <div class="kpi-row" id="kpi-subs"></div>
+  <div class="filter-bar">
+    <input class="fi" id="q-subs" placeholder="🔍 Buscar professor ou modalidade..." oninput="renderSubs()">
+    <select class="fsel" id="f-subs-status" onchange="renderSubs()">
+      <option value="">Todos os status</option>
+      <option value="Pendente">Pendente</option>
+      <option value="Resolvido">Resolvido</option>
+      <option value="Sem substituto">Sem substituto</option>
+    </select>
+    <select class="fsel" id="f-subs-mes" onchange="renderSubs()">
+      <option value="">Todos os meses</option>
+    </select>
+  </div>
+  <div id="list-subs"></div>
+</div>
+
+<!-- ═══════════════════════ FORNECEDORES ═══════════════════════ -->
+<div class="panel" id="panel-fornecedores">
+  <div class="sec-head">
+    <div>
+      <div class="sec-title">Fornecedores</div>
+      <div class="sec-sub">Contatos e prestadores de serviço do NAC</div>
+    </div>
+    <button class="btn-add" onclick="openModal('fornecedor')">+ Novo Fornecedor</button>
+  </div>
+  <div class="filter-bar">
+    <input class="fi" id="q-forn" placeholder="🔍 Buscar fornecedor ou serviço..." oninput="renderFornecedores()">
+    <select class="fsel" id="f-forn-tipo" onchange="renderFornecedores()">
+      <option value="">Todos os tipos</option>
+      <option value="Transporte">Transporte</option>
+      <option value="Arbitragem">Arbitragem</option>
+      <option value="Equipamentos">Equipamentos</option>
+      <option value="Alimentação">Alimentação</option>
+      <option value="Outro">Outro</option>
+    </select>
+  </div>
+  <div class="forn-grid" id="list-fornecedores"></div>
+</div>
+
+</div><!-- /app -->
+
+<!-- MODAL -->
+<div class="ov" id="modal-ov" style="display:none" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <span class="modal-title" id="modal-title">Novo</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="ov" id="confirm-ov" style="display:none" onclick="closeConfirm(event)">
+  <div class="confirm-box" onclick="event.stopPropagation()">
+    <div class="confirm-head"><h3>Confirmar exclusão</h3></div>
+    <div class="confirm-body">
+      <div class="confirm-msg" id="confirm-msg">Tem certeza que deseja excluir este registro?</div>
+      <div class="confirm-btns">
+        <button class="btn-cancel-conf" onclick="closeConfirm()">Cancelar</button>
+        <button class="btn-del-conf" id="confirm-ok">Excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════
+const SK_JOGOS   = 'nac_jogos_v1';
+const SK_TRANSP  = 'nac_transp_v1';
+const SK_SUBS    = 'nac_subs_v1';
+const SK_FORN    = 'nac_forn_v1';
+
+function load(key){ try{ return JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){ return []; } }
+function save(key,data){ try{ localStorage.setItem(key, JSON.stringify(data)); }catch(e){} }
+
+let JOGOS      = load(SK_JOGOS);
+let TRANSPORTE = load(SK_TRANSP);
+let SUBS       = load(SK_SUBS);
+let FORNECEDORES = load(SK_FORN);
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MODALIDADES = ['Futsal','Vôlei','Natação','Ginástica Rítmica','Balé','Teatro','Judô','Basquete','Dança','Educação Física','Outro'];
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+function fmtDate(str){
+  if(!str) return '—';
+  const [y,m,d] = str.split('-');
+  return `${d}/${m}/${y}`;
+}
+function fmtDateTime(str){
+  if(!str) return '—';
+  return str.replace('T',' ').slice(0,16).replace('-','/').replace('-','/');
+}
+
+function badge(status){
+  const map = {
+    'Confirmado':'badge-green','Pendente':'badge-amber','Cancelado':'badge-red',
+    'Realizado':'badge-gray','Reservado':'badge-blue','Resolvido':'badge-green',
+    'Sem substituto':'badge-red','Urgente':'badge-red'
+  };
+  return `<span class="badge ${map[status]||'badge-gray'}">${status}</span>`;
+}
+
+function toast(msg, type=''){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast' + (type?' '+type:'');
+  el.style.display='block';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.style.display='none', 2800);
+}
+
+// date display
+const now = new Date();
+document.getElementById('brand-date').textContent =
+  now.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace('.','')+' · '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+let activeTab = 'jogos';
+function setTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    const tabs=['jogos','transporte','subs','fornecedores'];
+    b.classList.toggle('active', tabs[i]===tab);
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════
+let editId=null, editType=null;
+
+function openModal(type, id=null){
+  editType=type; editId=id;
+  const ov = document.getElementById('modal-ov');
+  const body = document.getElementById('modal-body');
+  const title = document.getElementById('modal-title');
+  let data = null;
+  if(id){
+    if(type==='jogo') data=JOGOS.find(x=>x.id===id);
+    else if(type==='transporte') data=TRANSPORTE.find(x=>x.id===id);
+    else if(type==='sub') data=SUBS.find(x=>x.id===id);
+    else if(type==='fornecedor') data=FORNECEDORES.find(x=>x.id===id);
+  }
+
+  if(type==='jogo'){
+    title.textContent = id ? 'Editar Jogo' : 'Novo Jogo';
+    const mods = MODALIDADES.map(m=>`<option${data&&data.modalidade===m?' selected':''}>${m}</option>`).join('');
+    body.innerHTML=`
+      <div class="form-group"><label class="form-label">Modalidade</label>
+        <select class="form-select" id="f-mod">${mods}</select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Data</label>
+          <input class="form-input" type="date" id="f-data" value="${data?.data||''}"></div>
+        <div class="form-group"><label class="form-label">Horário</label>
+          <input class="form-input" type="time" id="f-hora" value="${data?.hora||''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Adversário / Evento</label>
+        <input class="form-input" id="f-adv" placeholder="Ex: Colégio XYZ ou Torneio Regional" value="${data?.adversario||''}"></div>
+      <div class="form-group"><label class="form-label">Local</label>
+        <input class="form-input" id="f-local" placeholder="Ex: Ginásio do Colégio / Quadra externa" value="${data?.local||''}"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <input class="form-input" id="f-cat" placeholder="Ex: Sub-12, Misto" value="${data?.categoria||''}"></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="f-status">
+            ${['Pendente','Confirmado','Cancelado','Realizado'].map(s=>`<option${data?.status===s?' selected':''}>${s}</option>`).join('')}
+          </select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Observações</label>
+        <textarea class="form-textarea" id="f-obs" placeholder="Informações adicionais...">${data?.obs||''}</textarea></div>
+      <button class="btn-save" onclick="saveJogo()">Salvar</button>`;
+  }
+
+  else if(type==='transporte'){
+    title.textContent = id ? 'Editar Reserva' : 'Nova Reserva de Transporte';
+    const fornNames = FORNECEDORES.filter(f=>f.tipo==='Transporte').map(f=>f.nome);
+    const fornOpts = ['','...outro'].concat(fornNames).map(f=>`<option${data&&data.fornecedor===f?' selected':''}>${f}</option>`).join('');
+    body.innerHTML=`
+      <div class="form-group"><label class="form-label">Evento / Jogo vinculado</label>
+        <input class="form-input" id="f-evento" placeholder="Ex: Futsal vs Colégio XYZ" value="${data?.evento||''}"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Data</label>
+          <input class="form-input" type="date" id="f-data" value="${data?.data||''}"></div>
+        <div class="form-group"><label class="form-label">Horário saída</label>
+          <input class="form-input" type="time" id="f-hora" value="${data?.hora||''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Fornecedor de Transporte</label>
+        <select class="form-select" id="f-forn"><option value="">Selecione...</option>${fornOpts}</select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nº de alunos</label>
+          <input class="form-input" type="number" id="f-alunos" placeholder="0" value="${data?.alunos||''}"></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="f-status">
+            ${['Pendente','Reservado','Confirmado','Cancelado'].map(s=>`<option${data?.status===s?' selected':''}>${s}</option>`).join('')}
+          </select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Valor (R$)</label>
+        <input class="form-input" id="f-valor" placeholder="0,00" value="${data?.valor||''}"></div>
+      <div class="form-group"><label class="form-label">Observações</label>
+        <textarea class="form-textarea" id="f-obs" placeholder="Ponto de encontro, retorno previsto...">${data?.obs||''}</textarea></div>
+      <button class="btn-save" onclick="saveTransporte()">Salvar</button>`;
+  }
+
+  else if(type==='sub'){
+    title.textContent = id ? 'Editar Substituição' : 'Registrar Substituição';
+    const mods = MODALIDADES.map(m=>`<option${data&&data.modalidade===m?' selected':''}>${m}</option>`).join('');
+    body.innerHTML=`
+      <div class="form-group"><label class="form-label">Professor ausente</label>
+        <input class="form-input" id="f-prof" placeholder="Nome do professor" value="${data?.professor||''}"></div>
+      <div class="form-group"><label class="form-label">Modalidade / Turma</label>
+        <select class="form-select" id="f-mod">${mods}</select></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Data da ausência</label>
+          <input class="form-input" type="date" id="f-data" value="${data?.data||''}"></div>
+        <div class="form-group"><label class="form-label">Horário da aula</label>
+          <input class="form-input" type="time" id="f-hora" value="${data?.hora||''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Substituto</label>
+        <input class="form-input" id="f-sub" placeholder="Nome do substituto (deixe em branco se não definido)" value="${data?.substituto||''}"></div>
+      <div class="form-group"><label class="form-label">Motivo da ausência</label>
+        <input class="form-input" id="f-motivo" placeholder="Ex: Atestado médico, falta justificada..." value="${data?.motivo||''}"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="f-status">
+          ${['Pendente','Resolvido','Sem substituto'].map(s=>`<option${data?.status===s?' selected':''}>${s}</option>`).join('')}
+        </select></div>
+      <div class="form-group"><label class="form-label">Observações</label>
+        <textarea class="form-textarea" id="f-obs" placeholder="Informações adicionais...">${data?.obs||''}</textarea></div>
+      <button class="btn-save amber" onclick="saveSub()">Salvar</button>`;
+  }
+
+  else if(type==='fornecedor'){
+    title.textContent = id ? 'Editar Fornecedor' : 'Novo Fornecedor';
+    body.innerHTML=`
+      <div class="form-group"><label class="form-label">Nome / Empresa</label>
+        <input class="form-input" id="f-nome" placeholder="Nome do fornecedor ou empresa" value="${data?.nome||''}"></div>
+      <div class="form-group"><label class="form-label">Tipo de serviço</label>
+        <select class="form-select" id="f-tipo">
+          ${['Transporte','Arbitragem','Equipamentos','Alimentação','Outro'].map(t=>`<option${data&&data.tipo===t?' selected':''}>${t}</option>`).join('')}
+        </select></div>
+      <div class="form-group"><label class="form-label">Telefone / WhatsApp</label>
+        <input class="form-input" id="f-tel" type="tel" placeholder="(61) 9xxxx-xxxx" value="${data?.telefone||''}"></div>
+      <div class="form-group"><label class="form-label">E-mail</label>
+        <input class="form-input" id="f-email" type="email" placeholder="email@exemplo.com" value="${data?.email||''}"></div>
+      <div class="form-group"><label class="form-label">Contato responsável</label>
+        <input class="form-input" id="f-contato" placeholder="Nome da pessoa de contato" value="${data?.contato||''}"></div>
+      <div class="form-group"><label class="form-label">Observações / Condições</label>
+        <textarea class="form-textarea" id="f-obs" placeholder="Preço médio, condições de pagamento, observações...">${data?.obs||''}</textarea></div>
+      <button class="btn-save green" onclick="saveFornecedor()">Salvar</button>`;
+  }
+
+  ov.style.display='flex';
+  setTimeout(()=>{ const first=body.querySelector('input,select,textarea'); if(first)first.focus(); },200);
+}
+
+function closeModal(e){
+  if(e&&e.target!==document.getElementById('modal-ov'))return;
+  document.getElementById('modal-ov').style.display='none';
+  editId=null; editType=null;
+}
+
+function closeConfirm(e){
+  if(e&&e.target!==document.getElementById('confirm-ov'))return;
+  document.getElementById('confirm-ov').style.display='none';
+}
+
+function confirmDelete(msg, cb){
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-ok').onclick=()=>{ cb(); document.getElementById('confirm-ov').style.display='none'; };
+  document.getElementById('confirm-ov').style.display='flex';
+}
+
+function g(id){ return (document.getElementById(id)||{}).value||''; }
+
+// ═══════════════════════════════════════════════
+// JOGOS
+// ═══════════════════════════════════════════════
+function saveJogo(){
+  if(!g('f-data')){ toast('Informe a data do jogo','red'); return; }
+  if(!g('f-adv')){ toast('Informe o adversário ou evento','red'); return; }
+  const item={
+    id: editId||uid(),
+    modalidade:g('f-mod'), data:g('f-data'), hora:g('f-hora'),
+    adversario:g('f-adv'), local:g('f-local'), categoria:g('f-cat'),
+    status:g('f-status'), obs:g('f-obs'),
+    criadoEm: editId ? JOGOS.find(x=>x.id===editId)?.criadoEm : new Date().toISOString()
+  };
+  if(editId){ JOGOS=JOGOS.map(x=>x.id===editId?item:x); }
+  else { JOGOS.unshift(item); }
+  save(SK_JOGOS, JOGOS);
+  document.getElementById('modal-ov').style.display='none';
+  renderJogos(); updateModFilter();
+  toast(editId?'Jogo atualizado!':'Jogo registrado!','green');
+}
+
+function deleteJogo(id){
+  confirmDelete('Excluir este jogo do calendário?', ()=>{
+    JOGOS=JOGOS.filter(x=>x.id!==id);
+    save(SK_JOGOS,JOGOS);
+    renderJogos(); updateModFilter();
+    toast('Jogo excluído.'); 
+  });
+}
+
+function renderJogos(){
+  const q=g('q-jogos').toLowerCase();
+  const fs=g('f-jogos-status');
+  const fm=g('f-jogos-mod');
+  let list=JOGOS.filter(j=>{
+    if(fs&&j.status!==fs)return false;
+    if(fm&&j.modalidade!==fm)return false;
+    if(q&&!`${j.modalidade}${j.adversario}${j.local}${j.categoria}`.toLowerCase().includes(q))return false;
+    return true;
+  }).sort((a,b)=>a.data>b.data?1:-1);
+
+  // KPIs
+  const total=JOGOS.length, conf=JOGOS.filter(x=>x.status==='Confirmado').length;
+  const pend=JOGOS.filter(x=>x.status==='Pendente').length, real=JOGOS.filter(x=>x.status==='Realizado').length;
+  document.getElementById('kpi-jogos').innerHTML=`
+    <div class="kpi-card"><div class="kpi-n">${total}</div><div class="kpi-l">Total de Jogos</div></div>
+    <div class="kpi-card green"><div class="kpi-n">${conf}</div><div class="kpi-l">Confirmados</div></div>
+    <div class="kpi-card amber"><div class="kpi-n">${pend}</div><div class="kpi-l">Pendentes</div></div>
+    <div class="kpi-card"><div class="kpi-n">${real}</div><div class="kpi-l">Realizados</div></div>`;
+
+  if(!list.length){
+    document.getElementById('list-jogos').innerHTML=`<div class="empty"><div class="empty-icon">🏆</div>Nenhum jogo encontrado.<br>Clique em <b>+ Novo Jogo</b> para começar.</div>`;
+    return;
+  }
+
+  document.getElementById('list-jogos').innerHTML=`<div class="cards-list">${list.map(j=>`
+    <div class="card">
+      <div class="card-head" onclick="toggleCard('j${j.id}')">
+        <div>
+          <div class="card-title">${j.modalidade} ${j.categoria?'— '+j.categoria:''} · ${j.adversario}</div>
+          <div class="card-meta">
+            <span>📅 ${fmtDate(j.data)}${j.hora?' às '+j.hora:''}</span>
+            ${j.local?`<span>📍 ${j.local}</span>`:''}
+            ${badge(j.status)}
+          </div>
+        </div>
+        <div class="card-actions" onclick="event.stopPropagation()">
+          <button class="btn-icon" onclick="openModal('jogo','${j.id}')" title="Editar">✏️</button>
+          <button class="btn-icon danger" onclick="deleteJogo('${j.id}')" title="Excluir">🗑</button>
+        </div>
+      </div>
+      <div class="card-body" id="j${j.id}">
+        <div class="card-detail-grid">
+          <div class="cd-row"><div class="cd-label">Modalidade</div><div class="cd-val">${j.modalidade}</div></div>
+          <div class="cd-row"><div class="cd-label">Categoria</div><div class="cd-val">${j.categoria||'—'}</div></div>
+          <div class="cd-row"><div class="cd-label">Data</div><div class="cd-val">${fmtDate(j.data)}</div></div>
+          <div class="cd-row"><div class="cd-label">Horário</div><div class="cd-val">${j.hora||'—'}</div></div>
+          <div class="cd-row"><div class="cd-label">Local</div><div class="cd-val">${j.local||'—'}</div></div>
+          <div class="cd-row"><div class="cd-label">Status</div><div class="cd-val">${badge(j.status)}</div></div>
+        </div>
+        ${j.obs?`<div class="cd-obs">📝 ${j.obs}</div>`:''}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function updateModFilter(){
+  const mods=[...new Set(JOGOS.map(j=>j.modalidade))].sort();
+  const sel=document.getElementById('f-jogos-mod');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Todas as modalidades</option>'+mods.map(m=>`<option${cur===m?' selected':''}>${m}</option>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// TRANSPORTE
+// ═══════════════════════════════════════════════
+function saveTransporte(){
+  if(!g('f-data')){ toast('Informe a data','red'); return; }
+  if(!g('f-evento')){ toast('Informe o evento','red'); return; }
+  const item={
+    id:editId||uid(),
+    evento:g('f-evento'), data:g('f-data'), hora:g('f-hora'),
+    fornecedor:g('f-forn'), alunos:g('f-alunos'), status:g('f-status'),
+    valor:g('f-valor'), obs:g('f-obs'),
+    criadoEm: editId ? TRANSPORTE.find(x=>x.id===editId)?.criadoEm : new Date().toISOString()
+  };
+  if(editId){ TRANSPORTE=TRANSPORTE.map(x=>x.id===editId?item:x); }
+  else { TRANSPORTE.unshift(item); }
+  save(SK_TRANSP, TRANSPORTE);
+  document.getElementById('modal-ov').style.display='none';
+  renderTransporte();
+  toast(editId?'Reserva atualizada!':'Reserva registrada!','green');
+}
+
+function deleteTransporte(id){
+  confirmDelete('Excluir esta reserva de transporte?', ()=>{
+    TRANSPORTE=TRANSPORTE.filter(x=>x.id!==id);
+    save(SK_TRANSP,TRANSPORTE);
+    renderTransporte();
+    toast('Reserva excluída.');
+  });
+}
+
+function renderTransporte(){
+  const q=g('q-transporte').toLowerCase();
+  const fs=g('f-transp-status');
+  let list=TRANSPORTE.filter(t=>{
+    if(fs&&t.status!==fs)return false;
+    if(q&&!`${t.evento}${t.fornecedor}`.toLowerCase().includes(q))return false;
+    return true;
+  }).sort((a,b)=>a.data>b.data?1:-1);
+
+  const total=TRANSPORTE.length, conf=TRANSPORTE.filter(x=>x.status==='Confirmado').length;
+  const pend=TRANSPORTE.filter(x=>['Pendente','Reservado'].includes(x.status)).length;
+  document.getElementById('kpi-transporte').innerHTML=`
+    <div class="kpi-card"><div class="kpi-n">${total}</div><div class="kpi-l">Total de Reservas</div></div>
+    <div class="kpi-card green"><div class="kpi-n">${conf}</div><div class="kpi-l">Confirmadas</div></div>
+    <div class="kpi-card amber"><div class="kpi-n">${pend}</div><div class="kpi-l">Pendentes</div></div>`;
+
+  if(!list.length){
+    document.getElementById('list-transporte').innerHTML=`<div class="empty"><div class="empty-icon">🚌</div>Nenhuma reserva encontrada.<br>Clique em <b>+ Nova Reserva</b> para começar.</div>`;
+    return;
+  }
+
+  document.getElementById('list-transporte').innerHTML=`<div class="cards-list">${list.map(t=>`
+    <div class="card">
+      <div class="card-head" onclick="toggleCard('t${t.id}')">
+        <div>
+          <div class="card-title">${t.evento}</div>
+          <div class="card-meta">
+            <span>📅 ${fmtDate(t.data)}${t.hora?' às '+t.hora:''}</span>
+            ${t.fornecedor?`<span>🚌 ${t.fornecedor}</span>`:''}
+            ${t.alunos?`<span>👥 ${t.alunos} alunos</span>`:''}
+            ${badge(t.status)}
+          </div>
+        </div>
+        <div class="card-actions" onclick="event.stopPropagation()">
+          <button class="btn-icon" onclick="openModal('transporte','${t.id}')" title="Editar">✏️</button>
+          <button class="btn-icon danger" onclick="deleteTransporte('${t.id}')" title="Excluir">🗑</button>
+        </div>
+      </div>
+      <div class="card-body" id="t${t.id}">
+        <div class="card-detail-grid">
+          <div class="cd-row"><div class="cd-label">Evento</div><div class="cd-val">${t.evento}</div></div>
+          <div class="cd-row"><div class="cd-label">Data</div><div class="cd-val">${fmtDate(t.data)}</div></div>
+          <div class="cd-row"><div class="cd-label">Saída</div><div class="cd-val">${t.hora||'—'}</div></div>
+          <div class="cd-row"><div class="cd-label">Fornecedor</div><div class="cd-val">${t.fornecedor||'—'}</div></div>
+          <div class="cd-row"><div class="cd-label">Nº Alunos</div><div class="cd-val">${t.alunos||'—'}</div></div>
+          <div class="cd-row"><div class="cd-label">Valor</div><div class="cd-val">${t.valor?'R$ '+t.valor:'—'}</div></div>
+        </div>
+        ${t.obs?`<div class="cd-obs">📝 ${t.obs}</div>`:''}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+// ═══════════════════════════════════════════════
+// SUBSTITUIÇÕES
+// ═══════════════════════════════════════════════
+function saveSub(){
+  if(!g('f-prof')){ toast('Informe o professor ausente','red'); return; }
+  if(!g('f-data')){ toast('Informe a data','red'); return; }
+  const item={
+    id:editId||uid(),
+    professor:g('f-prof'), modalidade:g('f-mod'), data:g('f-data'),
+    hora:g('f-hora'), substituto:g('f-sub'), motivo:g('f-motivo'),
+    status:g('f-status'), obs:g('f-obs'),
+    criadoEm: editId ? SUBS.find(x=>x.id===editId)?.criadoEm : new Date().toISOString()
+  };
+  if(editId){ SUBS=SUBS.map(x=>x.id===editId?item:x); }
+  else { SUBS.unshift(item); }
+  save(SK_SUBS, SUBS);
+  document.getElementById('modal-ov').style.display='none';
+  renderSubs(); updateSubsMes();
+  toast(editId?'Substituição atualizada!':'Substituição registrada!','green');
+}
+
+function deleteSub(id){
+  confirmDelete('Excluir este registro de substituição?', ()=>{
+    SUBS=SUBS.filter(x=>x.id!==id);
+    save(SK_SUBS,SUBS);
+    renderSubs(); updateSubsMes();
+    toast('Registro excluído.');
+  });
+}
+
+function renderSubs(){
+  const q=g('q-subs').toLowerCase();
+  const fs=g('f-subs-status');
+  const fm=g('f-subs-mes');
+  let list=SUBS.filter(s=>{
+    if(fs&&s.status!==fs)return false;
+    if(fm&&!(s.data||'').startsWith(fm))return false;
+    if(q&&!`${s.professor}${s.modalidade}${s.substituto}`.toLowerCase().includes(q))return false;
+    return true;
+  }).sort((a,b)=>b.data>a.data?1:-1);
+
+  const total=SUBS.length, pend=SUBS.filter(x=>x.status==='Pendente').length;
+  const resol=SUBS.filter(x=>x.status==='Resolvido').length, sem=SUBS.filter(x=>x.status==='Sem substituto').length;
+  document.getElementById('kpi-subs').innerHTML=`
+    <div class="kpi-card"><div class="kpi-n">${total}</div><div class="kpi-l">Total registros</div></div>
+    <div class="kpi-card amber"><div class="kpi-n">${pend}</div><div class="kpi-l">Pendentes</div></div>
+    <div class="kpi-card green"><div class="kpi-n">${resol}</div><div class="kpi-l">Resolvidos</div></div>
+    <div class="kpi-card red"><div class="kpi-n">${sem}</div><div class="kpi-l">Sem substituto</div></div>`;
+
+  if(!list.length){
+    document.getElementById('list-subs').innerHTML=`<div class="empty"><div class="empty-icon">🔄</div>Nenhuma substituição encontrada.<br>Clique em <b>+ Registrar</b> para começar.</div>`;
+    return;
+  }
+
+  document.getElementById('list-subs').innerHTML=`<div class="cards-list">${list.map(s=>`
+    <div class="card">
+      <div class="card-head" onclick="toggleCard('s${s.id}')">
+        <div>
+          <div class="card-title">${s.professor} · ${s.modalidade}</div>
+          <div class="card-meta">
+            <span>📅 ${fmtDate(s.data)}${s.hora?' às '+s.hora:''}</span>
+            ${s.substituto?`<span>👤 Sub: ${s.substituto}</span>`:``}
+            ${badge(s.status)}
+          </div>
+        </div>
+        <div class="card-actions" onclick="event.stopPropagation()">
+          <button class="btn-icon" onclick="openModal('sub','${s.id}')" title="Editar">✏️</button>
+          <button class="btn-icon danger" onclick="deleteSub('${s.id}')" title="Excluir">🗑</button>
+        </div>
+      </div>
+      <div class="card-body" id="s${s.id}">
+        <div class="card-detail-grid">
+          <div class="cd-row"><div class="cd-label">Professor</div><div class="cd-val">${s.professor}</div></div>
+          <div class="cd-row"><div class="cd-label">Modalidade</div><div class="cd-val">${s.modalidade}</div></div>
+          <div class="cd-row"><div class="cd-label">Data</div><div class="cd-val">${fmtDate(s.data)}</div></div>
+          <div class="cd-row"><div class="cd-label">Horário</div><div class="cd-val">${s.hora||'—'}</div></div>
+          <div class="cd-row"><div class="cd-label">Substituto</div><div class="cd-val">${s.substituto||'A definir'}</div></div>
+          <div class="cd-row"><div class="cd-label">Motivo</div><div class="cd-val">${s.motivo||'—'}</div></div>
+        </div>
+        ${s.obs?`<div class="cd-obs">📝 ${s.obs}</div>`:''}
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function updateSubsMes(){
+  const meses=[...new Set(SUBS.map(s=>(s.data||'').slice(0,7)))].sort().reverse();
+  const sel=document.getElementById('f-subs-mes');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Todos os meses</option>'+meses.map(m=>{
+    const [y,mo]=m.split('-');
+    return `<option value="${m}"${cur===m?' selected':''}>${MESES_FULL[parseInt(mo)-1]} ${y}</option>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// FORNECEDORES
+// ═══════════════════════════════════════════════
+function saveFornecedor(){
+  if(!g('f-nome')){ toast('Informe o nome do fornecedor','red'); return; }
+  const item={
+    id:editId||uid(),
+    nome:g('f-nome'), tipo:g('f-tipo'), telefone:g('f-tel'),
+    email:g('f-email'), contato:g('f-contato'), obs:g('f-obs'),
+    criadoEm: editId ? FORNECEDORES.find(x=>x.id===editId)?.criadoEm : new Date().toISOString()
+  };
+  if(editId){ FORNECEDORES=FORNECEDORES.map(x=>x.id===editId?item:x); }
+  else { FORNECEDORES.push(item); }
+  save(SK_FORN, FORNECEDORES);
+  document.getElementById('modal-ov').style.display='none';
+  renderFornecedores();
+  toast(editId?'Fornecedor atualizado!':'Fornecedor cadastrado!','green');
+}
+
+function deleteFornecedor(id){
+  confirmDelete('Excluir este fornecedor?', ()=>{
+    FORNECEDORES=FORNECEDORES.filter(x=>x.id!==id);
+    save(SK_FORN,FORNECEDORES);
+    renderFornecedores();
+    toast('Fornecedor excluído.');
+  });
+}
+
+function renderFornecedores(){
+  const q=g('q-forn').toLowerCase();
+  const ft=g('f-forn-tipo');
+  let list=FORNECEDORES.filter(f=>{
+    if(ft&&f.tipo!==ft)return false;
+    if(q&&!`${f.nome}${f.tipo}${f.contato}`.toLowerCase().includes(q))return false;
+    return true;
+  }).sort((a,b)=>a.nome.localeCompare(b.nome));
+
+  if(!list.length){
+    document.getElementById('list-fornecedores').innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📋</div>Nenhum fornecedor cadastrado.<br>Clique em <b>+ Novo Fornecedor</b> para começar.</div>`;
+    return;
+  }
+
+  const tipoIcon={Transporte:'🚌',Arbitragem:'🏅',Equipamentos:'⚙️',Alimentação:'🍽️',Outro:'📌'};
+  document.getElementById('list-fornecedores').innerHTML=list.map(f=>`
+    <div class="forn-card">
+      <div>
+        <div class="forn-name">${f.nome}</div>
+        <div class="forn-tipo">${tipoIcon[f.tipo]||'📌'} ${f.tipo}</div>
+      </div>
+      ${f.contato?`<div style="font-size:11px;color:var(--muted)">👤 ${f.contato}</div>`:''}
+      ${f.telefone?`<div class="forn-contact">📱 ${f.telefone}</div>`:''}
+      ${f.email?`<div class="forn-contact" style="font-size:11px">✉️ ${f.email}</div>`:''}
+      ${f.obs?`<div style="font-size:11px;color:var(--muted);line-height:1.4;background:var(--gray);padding:7px 9px;border-radius:6px">${f.obs}</div>`:''}
+      <div class="forn-actions">
+        ${f.telefone?`<button class="btn-wpp" onclick="window.open('https://wa.me/55'+('${f.telefone}'.replace(/\D/g,'')))">WhatsApp</button>`:''}
+        <button class="btn-edit-forn" onclick="openModal('fornecedor','${f.id}')">Editar</button>
+        <button class="btn-icon danger" onclick="deleteFornecedor('${f.id}')" style="width:32px;height:32px">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// TOGGLE CARD BODY
+// ═══════════════════════════════════════════════
+function toggleCard(id){
+  const el=document.getElementById(id);
+  if(el) el.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════
+function renderAll(){
+  renderJogos(); renderTransporte(); renderSubs(); renderFornecedores();
+  updateModFilter(); updateSubsMes();
+}
+
+renderAll();
+</script>
+</body>
+</html>
