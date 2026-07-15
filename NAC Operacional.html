@@ -8,7 +8,8 @@
 <title>Plataforma Operacional NAC | Marista</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Montserrat',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Montserrat',sans-serif;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+[onclick]{cursor:pointer}
 :root{
   --azul:#002B7F;--azul-h:#001F5C;--azul-l:#E8EDF8;--azul-m:#4A6BBF;
   --red:#E31837;--red-l:#FDEAED;
@@ -17,7 +18,8 @@
   --white:#fff;--gray:#F4F5F8;--border:#C8D0E8;
   --text:#1A1A2E;--muted:#5A6480;
 }
-body{background:var(--gray);min-height:100vh;padding:0}
+body{background:var(--gray);min-height:100vh;padding:0;cursor:default}
+button,[onclick],.card-head,.btn-wpp,.btn-edit-forn,.tab-btn,.forn-card{cursor:pointer;-webkit-appearance:none}
 .app{max-width:960px;margin:0 auto;padding:12px 14px 40px}
 
 /* BRAND */
@@ -628,9 +630,7 @@ async function saveTransporte(){
     id:editId||uid(),
     evento:g('f-evento'), data:g('f-data'), hora:g('f-hora'),
     fornecedor:g('f-forn'), alunos:g('f-alunos'), status:g('f-status'),
-    valor:g('f-valor'), obs:g('f-obs'),
-    criadoEm: editId ? TRANSPORTE.find(x=>x.id===editId)?.criadoEm : new Date().toISOString()
-  };
+    valor:g('f-valor'), obs:g('f-obs')};
   try{
     if(editId){await sb.patch('transporte',editId,item);TRANSPORTE=TRANSPORTE.map(x=>x.id===editId?{...x,...item}:x);}
     else{await sb.post('transporte',item);TRANSPORTE.unshift(item);}
@@ -709,9 +709,7 @@ async function saveSub(){
     id:editId||uid(),
     professor:g('f-prof'), modalidade:g('f-mod'), data:g('f-data'),
     hora:g('f-hora'), substituto:g('f-sub'), motivo:g('f-motivo'),
-    status:g('f-status'), obs:g('f-obs'),
-    criadoEm: editId ? SUBS.find(x=>x.id===editId)?.criadoEm : new Date().toISOString()
-  };
+    status:g('f-status'), obs:g('f-obs')};
   try{
     if(editId){await sb.patch('substituicoes',editId,item);SUBS=SUBS.map(x=>x.id===editId?{...x,...item}:x);}
     else{await sb.post('substituicoes',item);SUBS.unshift(item);}
@@ -800,9 +798,7 @@ async function saveFornecedor(){
   const item={
     id:editId||uid(),
     nome:g('f-nome'), tipo:g('f-tipo'), telefone:g('f-tel'),
-    email:g('f-email'), contato:g('f-contato'), obs:g('f-obs'),
-    criadoEm: editId ? FORNECEDORES.find(x=>x.id===editId)?.criadoEm : new Date().toISOString()
-  };
+    email:g('f-email'), contato:g('f-contato'), obs:g('f-obs')};
   try{
     if(editId){await sb.patch('fornecedores',editId,item);FORNECEDORES=FORNECEDORES.map(x=>x.id===editId?{...x,...item}:x);}
     else{await sb.post('fornecedores',item);FORNECEDORES.push(item);}
