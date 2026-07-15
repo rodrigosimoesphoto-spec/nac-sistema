@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="color-scheme" content="light dark">
 <title>Gestão NAC</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
 <style>
-:root{--az:#002B7F;--az-h:#001F5C;--az-l:#E8EDF8;--az-m:#3A5FC8;--red:#D62828;--red-l:#FDEAEA;--green:#1A7A4A;--green-l:#E3F5EC;--amber:#B86000;--amber-l:#FEF3E2;--purple:#5B2D8E;--purple-l:#F0E8FC;--bg:#F0F2F8;--surface:#FFFFFF;--surface2:#F7F8FC;--border:#D4D9ED;--border2:#E8EBF5;--text:#111827;--text2:#4B5563;--text3:#9CA3AF;--shadow:0 1px 3px rgba(0,43,127,.08),0 4px 16px rgba(0,43,127,.06);--shadow-sm:0 1px 2px rgba(0,43,127,.06);--radius:12px;--radius-sm:8px}
-[data-theme="dark"]{--bg:#0D1117;--surface:#161B22;--surface2:#1C2230;--border:#2D3748;--border2:#253047;--text:#F0F4FF;--text2:#94A3B8;--text3:#4B5675;--az-l:#1A2545;--red-l:#2D1515;--green-l:#0F2D1E;--amber-l:#2D1E08;--purple-l:#1E1030;--shadow:0 1px 3px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2)}
+/* Force light mode by default — iOS fix */
+:root{color-scheme:light;--az:#002B7F;--az-h:#001F5C;--az-l:#E8EDF8;--az-m:#3A5FC8;--red:#D62828;--red-l:#FDEAEA;--green:#1A7A4A;--green-l:#E3F5EC;--amber:#B86000;--amber-l:#FEF3E2;--purple:#5B2D8E;--purple-l:#F0E8FC;--bg:#F0F2F8;--surface:#FFFFFF;--surface2:#F7F8FC;--border:#D4D9ED;--border2:#E8EBF5;--text:#111827;--text2:#4B5563;--text3:#9CA3AF;--shadow:0 1px 3px rgba(0,43,127,.08),0 4px 16px rgba(0,43,127,.06);--shadow-sm:0 1px 2px rgba(0,43,127,.06);--radius:12px;--radius-sm:8px}
+[data-theme="dark"]{color-scheme:dark;--bg:#0D1117;--surface:#161B22;--surface2:#1C2230;--border:#2D3748;--border2:#253047;--text:#F0F4FF;--text2:#94A3B8;--text3:#4B5675;--az-l:#1A2545;--red-l:#2D1515;--green-l:#0F2D1E;--amber-l:#2D1E08;--purple-l:#1E1030;--shadow:0 1px 3px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background .2s,color .2s}
 button{font-family:'Inter',sans-serif;cursor:pointer}
@@ -530,8 +532,19 @@ function renderPanel(id){
 // THEME / SIDEBAR / CLOCK
 // ═══════════════════════════════
 let isDark=localStorage.getItem('nac_theme')==='dark';
-function applyTheme(){document.documentElement.setAttribute('data-theme',isDark?'dark':'light');document.getElementById('theme-btn').textContent=isDark?'☀️':'🌙';}
-function toggleTheme(){isDark=!isDark;localStorage.setItem('nac_theme',isDark?'dark':'light');applyTheme();}
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  document.documentElement.style.colorScheme=isDark?'dark':'light';
+  document.body.style.background=isDark?'#0D1117':'#F0F2F8';
+  document.body.style.color=isDark?'#F0F4FF':'#111827';
+  const btn=document.getElementById('theme-btn');
+  if(btn)btn.textContent=isDark?'☀️':'🌙';
+}
+function toggleTheme(){
+  isDark=!isDark;
+  localStorage.setItem('nac_theme',isDark?'dark':'light');
+  applyTheme();
+}
 applyTheme();
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').style.display=document.getElementById('sidebar').classList.contains('open')?'block':'none';}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').style.display='none';}
