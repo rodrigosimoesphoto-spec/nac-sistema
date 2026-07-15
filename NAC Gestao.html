@@ -10,9 +10,12 @@
 /* Force light mode by default — iOS fix */
 :root{color-scheme:light;--az:#002B7F;--az-h:#001F5C;--az-l:#E8EDF8;--az-m:#3A5FC8;--red:#D62828;--red-l:#FDEAEA;--green:#1A7A4A;--green-l:#E3F5EC;--amber:#B86000;--amber-l:#FEF3E2;--purple:#5B2D8E;--purple-l:#F0E8FC;--bg:#F0F2F8;--surface:#FFFFFF;--surface2:#F7F8FC;--border:#D4D9ED;--border2:#E8EBF5;--text:#111827;--text2:#4B5563;--text3:#9CA3AF;--shadow:0 1px 3px rgba(0,43,127,.08),0 4px 16px rgba(0,43,127,.06);--shadow-sm:0 1px 2px rgba(0,43,127,.06);--radius:12px;--radius-sm:8px}
 [data-theme="dark"]{color-scheme:dark;--bg:#0D1117;--surface:#161B22;--surface2:#1C2230;--border:#2D3748;--border2:#253047;--text:#F0F4FF;--text2:#94A3B8;--text3:#4B5675;--az-l:#1A2545;--red-l:#2D1515;--green-l:#0F2D1E;--amber-l:#2D1E08;--purple-l:#1E1030;--shadow:0 1px 3px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2)}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background .2s,color .2s}
-button{font-family:'Inter',sans-serif;cursor:pointer}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+/* iOS Safari click fix */
+[onclick]{cursor:pointer}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background .2s,color .2s;cursor:default}
+button{font-family:'Inter',sans-serif;cursor:pointer;-webkit-appearance:none;appearance:none}
+a,button,[onclick],.nav-item,.task-item,.day-add,.day-task,.check-item,.log-item,.card-head,.star,.forn-card{cursor:pointer}
 input,select,textarea{font-family:'Inter',sans-serif}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 .shell{display:flex;min-height:100vh}
@@ -873,7 +876,25 @@ function renderMelhorias(){
 // ═══════════════════════════════
 // IA
 // ═══════════════════════════════
-const API_URL='https://api.anthropic.com/v1/messages';
+const EDGE_FN = "https://syuqwuqkbkqpysugltky.supabase.co/functions/v1/nac-ia";
+
+async function callClaude(userMsg, history=[]){
+  const context = buildContext();
+  const system = `Você é o assistente de gestão do NAC (Núcleo de Atividades Complementares) de um colégio Marista. Fale em português direto, sem formalidade. Seja objetivo e prático. Dados em tempo real do sistema:\n\n${context}`;
+  const messages = [...history, {role:'user', content:userMsg}];
+  const resp = await fetch(EDGE_FN, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + SB_KEY
+    },
+    body: JSON.stringify({ system, messages })
+  });
+  if(!resp.ok) throw new Error('Erro ' + resp.status);
+  const data = await resp.json();
+  return data.content.map(c => c.text||'').join('');
+}
+
 function buildContext(){
   const today=todayStr();
   const tarefasHoje=TASKS.filter(t=>t.data===today);
@@ -896,15 +917,6 @@ REGISTROS HOJE (${logsHoje.length}):
 ${logsHoje.map(l=>`- [${l.tipo}] ${l.texto}`).join('\n')||'Nenhum'}
 MELHORIAS ATIVAS (${melAtivas.length}):
 ${melAtivas.slice(0,5).map(m=>`- [${m.prioridade}/${m.status}] ${(m.problema||'').slice(0,80)}`).join('\n')||'Nenhuma'}`;
-}
-async function callClaude(userMsg,history=[]){
-  const context=buildContext();
-  const system=`Você é o assistente de gestão do NAC (Núcleo de Atividades Complementares) de um colégio Marista. Fale em português direto, sem formalidade. Seja objetivo e prático. Dados em tempo real do sistema:\n\n${context}`;
-  const messages=[...history,{role:'user',content:userMsg}];
-  const resp=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system,messages})});
-  if(!resp.ok)throw new Error('API error '+resp.status);
-  const data=await resp.json();
-  return data.content.map(c=>c.text||'').join('');
 }
 function renderIAPanel(){
   if(!IA_HISTORY.length){addIAMsg('bot','Olá! Sou o assistente do NAC. Estou conectado ao banco de dados em tempo real — vejo todas as tarefas, registros e melhorias. O que precisa?');}
