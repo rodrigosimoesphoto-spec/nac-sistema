@@ -10,9 +10,14 @@
 /* Force light mode by default — iOS fix */
 :root{color-scheme:light;--az:#002B7F;--az-h:#001F5C;--az-l:#E8EDF8;--az-m:#3A5FC8;--red:#D62828;--red-l:#FDEAEA;--green:#1A7A4A;--green-l:#E3F5EC;--amber:#B86000;--amber-l:#FEF3E2;--purple:#5B2D8E;--purple-l:#F0E8FC;--bg:#F0F2F8;--surface:#FFFFFF;--surface2:#F7F8FC;--border:#D4D9ED;--border2:#E8EBF5;--text:#111827;--text2:#4B5563;--text3:#9CA3AF;--shadow:0 1px 3px rgba(0,43,127,.08),0 4px 16px rgba(0,43,127,.06);--shadow-sm:0 1px 2px rgba(0,43,127,.06);--radius:12px;--radius-sm:8px}
 [data-theme="dark"]{color-scheme:dark;--bg:#0D1117;--surface:#161B22;--surface2:#1C2230;--border:#2D3748;--border2:#253047;--text:#F0F4FF;--text2:#94A3B8;--text3:#4B5675;--az-l:#1A2545;--red-l:#2D1515;--green-l:#0F2D1E;--amber-l:#2D1E08;--purple-l:#1E1030;--shadow:0 1px 3px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2)}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-/* iOS Safari click fix */
-[onclick]{cursor:pointer}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:rgba(0,0,0,0);touch-action:manipulation}
+button,a,[onclick],.nav-item,.task-item,.day-add,.day-task,.check-item,.star,.card-head,.btn-icon,.btn,.tab-btn{
+  cursor:pointer;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+input,textarea,select{-webkit-user-select:auto;user-select:auto}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background .2s,color .2s;cursor:default}
 button{font-family:'Inter',sans-serif;cursor:pointer;-webkit-appearance:none;appearance:none}
 a,button,[onclick],.nav-item,.task-item,.day-add,.day-task,.check-item,.log-item,.card-head,.star,.forn-card{cursor:pointer}
@@ -961,6 +966,24 @@ function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;do
 // ═══════════════════════════════
 // INIT
 // ═══════════════════════════════
+// iOS Global touch fix
+document.addEventListener('touchstart', function(){}, {passive:true});
+
+// Global delegation — catches all dynamic elements
+document.addEventListener('touchend', function(e){
+  const el = e.target.closest('button, [onclick], .nav-item, .task-item, .day-add, .day-task, .check-item, .star, .card-head, .btn-icon, .tab-btn, .forn-card');
+  if(el){
+    e.preventDefault();
+    // Find and fire onclick
+    const onclickAttr = el.getAttribute('onclick');
+    if(onclickAttr){
+      try{ new Function(onclickAttr).call(el); }catch(err){}
+    } else {
+      el.click();
+    }
+  }
+}, {passive:false});
+
 loadAll();
 setInterval(loadAll, 30000); // auto-refresh a cada 30s
 </script>
