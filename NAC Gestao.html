@@ -1,991 +1,1090 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="color-scheme" content="light">
 <title>Gestão NAC</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
 <style>
-/* Force light mode by default — iOS fix */
-:root{color-scheme:light;--az:#002B7F;--az-h:#001F5C;--az-l:#E8EDF8;--az-m:#3A5FC8;--red:#D62828;--red-l:#FDEAEA;--green:#1A7A4A;--green-l:#E3F5EC;--amber:#B86000;--amber-l:#FEF3E2;--purple:#5B2D8E;--purple-l:#F0E8FC;--bg:#F0F2F8;--surface:#FFFFFF;--surface2:#F7F8FC;--border:#D4D9ED;--border2:#E8EBF5;--text:#111827;--text2:#4B5563;--text3:#9CA3AF;--shadow:0 1px 3px rgba(0,43,127,.08),0 4px 16px rgba(0,43,127,.06);--shadow-sm:0 1px 2px rgba(0,43,127,.06);--radius:12px;--radius-sm:8px}
-[data-theme="dark"]{color-scheme:dark;--bg:#0D1117;--surface:#161B22;--surface2:#1C2230;--border:#2D3748;--border2:#253047;--text:#F0F4FF;--text2:#94A3B8;--text3:#4B5675;--az-l:#1A2545;--red-l:#2D1515;--green-l:#0F2D1E;--amber-l:#2D1E08;--purple-l:#1E1030;--shadow:0 1px 3px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.2)}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:rgba(0,0,0,0);touch-action:manipulation}
-button,a,[onclick],.nav-item,.task-item,.day-add,.day-task,.check-item,.star,.card-head,.btn-icon,.btn,.tab-btn{
-  cursor:pointer;
-  -webkit-user-select:none;
-  user-select:none;
-  -webkit-touch-callout:none;
-}
-input,textarea,select{-webkit-user-select:auto;user-select:auto}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background .2s,color .2s;cursor:default}
-button{font-family:'Inter',sans-serif;cursor:pointer;-webkit-appearance:none;appearance:none}
-a,button,[onclick],.nav-item,.task-item,.day-add,.day-task,.check-item,.log-item,.card-head,.star,.forn-card{cursor:pointer}
-input,select,textarea{font-family:'Inter',sans-serif}
-::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-.shell{display:flex;min-height:100vh}
-.sidebar{width:220px;background:var(--az);flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform .2s}
-.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
-.content{padding:20px;flex:1}
-@media(max-width:768px){.sidebar{transform:translateX(-220px)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.overlay{display:block!important}}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99}
-.sb-brand{padding:18px 16px 12px;border-bottom:1px solid rgba(255,255,255,.1)}
-.sb-logo{font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:#fff;letter-spacing:-.3px}
-.sb-sub{font-size:10px;color:rgba(255,255,255,.45);font-weight:500;text-transform:uppercase;letter-spacing:.8px;margin-top:1px}
-.sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
-.sb-section{font-size:9px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;padding:12px 8px 4px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,.65);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none;background:none;width:100%;text-align:left}
-.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}.nav-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600}
-.nav-item .ni{font-size:16px;width:20px;text-align:center;flex-shrink:0}
-.sb-footer{padding:12px 8px;border-top:1px solid rgba(255,255,255,.1)}
-.sb-user{display:flex;align-items:center;gap:8px;padding:8px 10px}
-.sb-avatar{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
-.sb-uname{font-size:12px;color:rgba(255,255,255,.7);font-weight:500}
-.sb-sync{font-size:9px;color:rgba(255,255,255,.4);margin-top:2px}
-.tb-menu{background:none;border:none;color:var(--text2);font-size:18px;display:none;padding:4px}
-@media(max-width:768px){.tb-menu{display:block}}
-.tb-title{font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;color:var(--az);letter-spacing:-.2px}
-.tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.tb-date{font-size:11px;color:var(--text3);font-weight:500}
-.sync-indicator{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
-.sync-indicator.syncing{background:var(--amber);animation:pulse 1s infinite}
-.sync-indicator.error{background:var(--red)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.btn-theme{background:none;border:1.5px solid var(--border);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2);transition:all .15s}
-.btn-theme:hover{border-color:var(--az);color:var(--az)}
-.panel{display:none}.panel.active{display:block}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
-.card-p{padding:16px}
-.card-head{padding:14px 16px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;gap:8px}
-.card-title{font-size:13px;font-weight:700;color:var(--text)}
-.card-body{padding:16px}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow-sm)}
-.kpi-n{font-family:'Montserrat',sans-serif;font-size:28px;font-weight:800;line-height:1;color:var(--az)}
-.kpi-l{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
-.kpi-trend{font-size:11px;font-weight:600;margin-top:2px}
-.kpi.accent{background:var(--az);border-color:var(--az)}.kpi.accent .kpi-n,.kpi.accent .kpi-l,.kpi.accent .kpi-trend{color:#fff}.kpi.accent .kpi-l{color:rgba(255,255,255,.55)}
-.kpi.red{border-left:3px solid var(--red)}.kpi.red .kpi-n{color:var(--red)}
-.kpi.green{border-left:3px solid var(--green)}.kpi.green .kpi-n{color:var(--green)}
-.kpi.amber{border-left:3px solid var(--amber)}.kpi.amber .kpi-n{color:var(--amber)}
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
-.b-az{background:var(--az-l);color:var(--az)}.b-red{background:var(--red-l);color:var(--red)}.b-green{background:var(--green-l);color:var(--green)}.b-amber{background:var(--amber-l);color:var(--amber)}.b-purple{background:var(--purple-l);color:var(--purple)}.b-gray{background:var(--surface2);color:var(--text3)}
-.prio{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.prio-alta{background:var(--red)}.prio-media{background:var(--amber)}.prio-baixa{background:var(--green)}
-.btn{padding:8px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;font-family:'Inter',sans-serif}
-.btn-primary{background:var(--az);color:#fff}.btn-primary:hover{background:var(--az-h)}
-.btn-ghost{background:none;border:1.5px solid var(--border);color:var(--text2)}.btn-ghost:hover{border-color:var(--az);color:var(--az)}
-.btn-sm{padding:5px 10px;font-size:11px}
-.btn-icon{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--text2);cursor:pointer;transition:all .15s}
-.btn-icon:hover{border-color:var(--az);color:var(--az)}
-.form-group{display:flex;flex-direction:column;gap:4px}
-.form-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
-.form-input,.form-select,.form-textarea{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s}
-.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--az)}
-.form-textarea{resize:vertical;min-height:80px;line-height:1.5}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sec-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-.sec-title{font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;color:var(--text);letter-spacing:-.3px}
-.sec-sub{font-size:11px;color:var(--text3);margin-top:2px;font-weight:500}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:700px){.grid-2{grid-template-columns:1fr}}
-.empty{text-align:center;padding:28px 16px;color:var(--text3);font-size:12px;font-weight:500}
-.empty-icon{font-size:28px;margin-bottom:6px}
-.check-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2);cursor:pointer}
-.check-item:last-child{border-bottom:none}
-.check-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--az);cursor:pointer;flex-shrink:0}
-.check-label{font-size:13px;color:var(--text);flex:1;transition:color .15s}
-.check-item.done .check-label{text-decoration:line-through;color:var(--text3)}
-.task-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:border-color .15s}
-.task-item:hover{border-color:var(--az-m)}.task-item.done-task{opacity:.55}
-.task-info{flex:1;min-width:0}
-.task-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.task-meta{font-size:10px;color:var(--text3);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;overflow-x:auto}
-@media(max-width:900px){.week-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:500px){.week-grid{grid-template-columns:1fr}}
-.day-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-height:180px;display:flex;flex-direction:column}
-.day-head{padding:10px 12px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
-.day-name{font-size:11px;font-weight:700;color:var(--az);text-transform:uppercase;letter-spacing:.5px}
-.day-date{font-size:10px;color:var(--text3);font-weight:500}
-.day-tasks{padding:8px;display:flex;flex-direction:column;gap:6px;flex:1}
-.day-task{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:7px 9px;cursor:pointer;transition:border-color .15s}
-.day-task:hover{border-color:var(--az)}
-.day-task-title{font-size:12px;font-weight:600;color:var(--text)}
-.day-task-meta{font-size:10px;color:var(--text3);margin-top:2px;display:flex;gap:6px;align-items:center}
-.day-add{display:flex;align-items:center;gap:6px;padding:8px 10px;color:var(--text3);font-size:11px;font-weight:600;cursor:pointer;border-top:1px solid var(--border2);transition:color .15s}
-.day-add:hover{color:var(--az)}
-.log-item{padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--border);margin-bottom:8px}
-.log-item.ocorrencia{border-left-color:var(--red)}.log-item.decisao{border-left-color:var(--az)}.log-item.ideia{border-left-color:var(--purple)}.log-item.reuniao{border-left-color:var(--green)}.log-item.observacao{border-left-color:var(--amber)}
-.log-type{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px}
-.log-text{font-size:13px;color:var(--text);line-height:1.5}
-.log-time{font-size:10px;color:var(--text3);margin-top:4px}
-.ai-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
-.ai-head{background:var(--az);padding:12px 14px;display:flex;align-items:center;gap:8px}
-.ai-avatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.ai-head-title{color:#fff;font-size:13px;font-weight:700}.ai-head-sub{color:rgba(255,255,255,.55);font-size:10px}
-.ai-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:300px;max-height:450px}
-.ai-msg{max-width:88%;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.55}
-.ai-msg.bot{background:var(--az-l);color:var(--text);align-self:flex-start;border-bottom-left-radius:2px}
-.ai-msg.user{background:var(--az);color:#fff;align-self:flex-end;border-bottom-right-radius:2px}
-.ai-msg.loading{color:var(--text3);font-style:italic;background:var(--surface2);align-self:flex-start}
-.ai-input-row{border-top:1px solid var(--border);padding:10px 12px;display:flex;gap:8px;align-items:flex-end}
-.ai-input{flex:1;border:1.5px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;color:var(--text);background:var(--surface);outline:none;resize:none;min-height:36px;max-height:100px;font-family:'Inter',sans-serif;line-height:1.4}
-.ai-input:focus{border-color:var(--az)}
-.ai-send{background:var(--az);color:#fff;border:none;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex-shrink:0;transition:background .15s}
-.ai-send:hover{background:var(--az-h)}.ai-send:disabled{opacity:.4;cursor:not-allowed}
-.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center}
-@media(min-width:600px){.modal-ov{align-items:center;padding:16px}}
-.modal{background:var(--surface);border-radius:14px 14px 0 0;width:100%;max-width:540px;max-height:92vh;overflow-y:auto;display:flex;flex-direction:column}
-@media(min-width:600px){.modal{border-radius:14px}}
-.modal-head{background:var(--az);padding:13px 16px;display:flex;justify-content:space-between;align-items:center;border-radius:14px 14px 0 0;position:sticky;top:0}
-.modal-title{color:#fff;font-size:13px;font-weight:700}
-.modal-close{background:rgba(255,255,255,.2);border:none;color:#fff;width:26px;height:26px;border-radius:50%;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.modal-body{padding:16px;display:flex;flex-direction:column;gap:12px;flex:1}
-.modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--az);color:#fff;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:700;z-index:999;display:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,43,127,.25)}
-.toast.success{background:var(--green)}.toast.error{background:var(--red)}
-.stars{display:flex;gap:4px}
-.star{font-size:22px;cursor:pointer;color:var(--border);transition:color .1s}.star.on{color:#F59E0B}
-.progress{height:6px;background:var(--border2);border-radius:3px;overflow:hidden}
-.progress-fill{height:100%;background:var(--az);border-radius:3px;transition:width .4s}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body,#root{height:100%;background:#F0F2F8}
+body{font-family:'Inter',sans-serif;color:#111827;font-size:14px;line-height:1.5;-webkit-text-size-adjust:100%}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#D4D9ED;border-radius:4px}
 </style>
 </head>
 <body>
-<div class="shell">
-<aside class="sidebar" id="sidebar">
-  <div class="sb-brand">
-    <div class="sb-logo">NAC</div>
-    <div class="sb-sub">Centro de Comando</div>
-  </div>
-  <nav class="sb-nav">
-    <div class="sb-section">Principal</div>
-    <button class="nav-item active" onclick="setPanel('dashboard')"><span class="ni">📊</span>Dashboard</button>
-    <button class="nav-item" onclick="setPanel('rotina')"><span class="ni">☀️</span>Rotina Diária</button>
-    <button class="nav-item" onclick="setPanel('semana')"><span class="ni">📅</span>Semana</button>
-    <div class="sb-section">Ferramentas</div>
-    <button class="nav-item" onclick="setPanel('ia')"><span class="ni">🤖</span>Assistente IA</button>
-    <button class="nav-item" onclick="setPanel('melhorias')"><span class="ni">💡</span>Melhorias</button>
-  </nav>
-  <div class="sb-footer">
-    <div class="sb-user">
-      <div class="sb-avatar">N</div>
-      <div><div class="sb-uname">NAC · Marista</div><div class="sb-sync" id="sb-sync">Sincronizado</div></div>
-    </div>
-  </div>
-</aside>
-<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
-<main class="main">
-  <div class="topbar">
-    <button class="tb-menu btn-icon" onclick="toggleSidebar()">☰</button>
-    <span class="tb-title" id="tb-title">Dashboard</span>
-    <div class="tb-right">
-      <div class="sync-indicator" id="sync-dot" title="Status de sincronização"></div>
-      <span class="tb-date" id="tb-date"></span>
-      <button class="btn-theme" onclick="toggleTheme()" id="theme-btn">🌙</button>
-    </div>
-  </div>
-  <div class="content">
+<div id="root"><div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;color:#002B7F;font-size:14px">Carregando...</div></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useCallback,useRef} = React;
 
-<!-- DASHBOARD -->
-<div class="panel active" id="panel-dashboard">
-  <div class="sec-head">
-    <div><div class="sec-title" id="dash-greeting">Carregando...</div><div class="sec-sub" id="dash-subtitle"></div></div>
-    <button class="btn btn-primary" onclick="gerarBriefing()">✨ Briefing IA</button>
-  </div>
-  <div class="kpi-grid" id="kpi-dash"></div>
-  <div id="briefing-box" style="display:none;margin-bottom:16px">
-    <div class="card">
-      <div class="card-head"><span class="card-title">🤖 Briefing do dia</span><button class="btn-icon btn-sm" onclick="document.getElementById('briefing-box').style.display='none'">✕</button></div>
-      <div class="card-body" id="briefing-content" style="font-size:13px;line-height:1.7;color:var(--text)"></div>
-    </div>
-  </div>
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-head"><span class="card-title">📋 Tarefas de hoje</span><button class="btn btn-sm btn-primary" onclick="openTaskModal(null,todayStr())">+ Adicionar</button></div>
-      <div class="card-body" id="dash-tasks-today" style="display:flex;flex-direction:column;gap:8px"></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">⚠️ Pendências em atraso</span></div>
-      <div class="card-body" id="dash-pendencias" style="display:flex;flex-direction:column;gap:8px"></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">✅ Checklist de abertura</span><span class="badge b-gray" id="check-progress-badge">0/0</span></div>
-      <div class="card-body" id="dash-checklist-preview"></div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">💡 Melhorias pendentes</span><button class="btn btn-sm btn-ghost" onclick="setPanel('melhorias')">Ver todas</button></div>
-      <div class="card-body" id="dash-melhorias" style="display:flex;flex-direction:column;gap:8px"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ROTINA -->
-<div class="panel" id="panel-rotina">
-  <div class="sec-head">
-    <div><div class="sec-title">Rotina Diária</div><div class="sec-sub" id="rotina-date-label"></div></div>
-    <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="changeRotinaDay(-1)">‹</button><button class="btn btn-ghost btn-sm" onclick="changeRotinaDay(1)">›</button></div>
-  </div>
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-head"><span class="card-title">🌅 Antes de iniciar</span><button class="btn-icon btn-sm" onclick="addCheckItem('abertura')" title="+">+</button></div>
-      <div class="card-body">
-        <div id="check-abertura"></div>
-        <div style="margin-top:10px"><div class="progress"><div class="progress-fill" id="prog-abertura" style="width:0%"></div></div><div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right" id="prog-abertura-label"></div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><span class="card-title">🌆 Encerramento</span><button class="btn-icon btn-sm" onclick="addCheckItem('encerramento')" title="+">+</button></div>
-      <div class="card-body">
-        <div id="check-encerramento"></div>
-        <div style="margin-top:14px"><div class="form-label" style="margin-bottom:8px">Nota de produtividade</div><div class="stars" id="stars-prod"></div></div>
-      </div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:14px">
-    <div class="card-head"><span class="card-title">📝 Registros do dia</span><button class="btn btn-sm btn-primary" onclick="openLogModal()">+ Registrar</button></div>
-    <div class="card-body"><div id="log-list"></div></div>
-  </div>
-</div>
-
-<!-- SEMANA -->
-<div class="panel" id="panel-semana">
-  <div class="sec-head">
-    <div><div class="sec-title">Planejamento da Semana</div><div class="sec-sub" id="semana-label"></div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="changeWeek(-1)">‹ Anterior</button>
-      <button class="btn btn-ghost btn-sm" onclick="changeWeek(0)">Hoje</button>
-      <button class="btn btn-ghost btn-sm" onclick="changeWeek(1)">Próxima ›</button>
-      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ Nova tarefa</button>
-    </div>
-  </div>
-  <div class="week-grid" id="week-grid"></div>
-  <div class="card" style="margin-top:14px">
-    <div class="card-head">
-      <span class="card-title">Lista completa</span>
-      <div style="display:flex;gap:6px">
-        <select class="form-select" style="width:auto;font-size:11px;padding:4px 8px" id="f-task-status" onchange="renderSemana()"><option value="">Todos</option><option>Não iniciado</option><option>Em andamento</option><option>Aguardando</option><option>Concluído</option></select>
-        <select class="form-select" style="width:auto;font-size:11px;padding:4px 8px" id="f-task-resp" onchange="renderSemana()"><option value="">Todos</option><option>Coordenador</option><option>Assistente</option></select>
-      </div>
-    </div>
-    <div class="card-body" id="semana-list"></div>
-  </div>
-</div>
-
-<!-- IA -->
-<div class="panel" id="panel-ia">
-  <div class="sec-head"><div><div class="sec-title">Assistente IA</div><div class="sec-sub">Análise em tempo real — dados sincronizados com Supabase</div></div></div>
-  <div class="grid-2" style="align-items:start">
-    <div class="ai-box">
-      <div class="ai-head"><div class="ai-avatar">🤖</div><div><div class="ai-head-title">Assistente NAC</div><div class="ai-head-sub">Powered by Claude · Dados em tempo real</div></div></div>
-      <div class="ai-msgs" id="ia-msgs"></div>
-      <div class="ai-input-row">
-        <textarea class="ai-input" id="ia-input" placeholder="Pergunte sobre o NAC..." rows="1" onkeydown="iaKeydown(event)" oninput="autoResize(this)"></textarea>
-        <button class="ai-send" id="ia-send" onclick="sendIA()">➤</button>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="card card-p">
-        <div class="card-title" style="margin-bottom:10px">⚡ Ações rápidas</div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="btn btn-ghost" style="justify-content:flex-start" onclick="iaPrompt('Faça um briefing completo do meu dia hoje, analisando tarefas, checklists e registros.')">📊 Briefing do dia</button>
-          <button class="btn btn-ghost" style="justify-content:flex-start" onclick="iaPrompt('Analise as tarefas desta semana e identifique riscos, atrasos e prioridades.')">⚠️ Análise de riscos</button>
-          <button class="btn btn-ghost" style="justify-content:flex-start" onclick="iaPrompt('Quais tarefas estão atrasadas ou pendentes? Liste com prioridade de ação.')">🔴 Tarefas em atraso</button>
-          <button class="btn btn-ghost" style="justify-content:flex-start" onclick="iaPrompt('Resuma a semana: o que foi concluído, pendente e precisa de atenção.')">📝 Resumo da semana</button>
-          <button class="btn btn-ghost" style="justify-content:flex-start" onclick="iaPrompt('Analise as melhorias e sugira por onde começar com base no impacto e prioridade.')">💡 Priorizar melhorias</button>
-          <button class="btn btn-ghost" style="justify-content:flex-start" onclick="iaPrompt('Quais são as 3 coisas mais importantes que devo focar agora?')">🎯 Foco agora</button>
-        </div>
-      </div>
-      <div class="card card-p">
-        <div class="card-title" style="margin-bottom:8px">📡 Status do banco</div>
-        <div id="db-status" style="font-size:11px;color:var(--text3);line-height:1.8"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MELHORIAS -->
-<div class="panel" id="panel-melhorias">
-  <div class="sec-head">
-    <div><div class="sec-title">Pontos de Melhoria</div><div class="sec-sub">Registro e acompanhamento de melhorias do NAC</div></div>
-    <button class="btn btn-primary" onclick="openMelhoriaModal()">+ Nova melhoria</button>
-  </div>
-  <div class="kpi-grid" id="kpi-melhorias"></div>
-  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-    <select class="form-select" style="width:auto;font-size:12px" id="f-mel-status" onchange="renderMelhorias()"><option value="">Todos</option><option>Identificado</option><option>Em análise</option><option>Em execução</option><option>Concluído</option><option>Descartado</option></select>
-    <select class="form-select" style="width:auto;font-size:12px" id="f-mel-prio" onchange="renderMelhorias()"><option value="">Todas prioridades</option><option>Alta</option><option>Média</option><option>Baixa</option></select>
-  </div>
-  <div id="list-melhorias" style="display:flex;flex-direction:column;gap:10px"></div>
-</div>
-
-  </div>
-</main>
-</div>
-
-<!-- MODAIS -->
-<div class="modal-ov" id="task-modal" style="display:none" onclick="closeModal('task-modal',event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-head"><span class="modal-title" id="task-modal-title">Nova Tarefa</span><button class="modal-close" onclick="closeModal('task-modal')">×</button></div>
-    <div class="modal-body">
-      <div class="form-group"><label class="form-label">Título</label><input class="form-input" id="t-titulo" placeholder="O que precisa ser feito?"></div>
-      <div class="form-group"><label class="form-label">Descrição</label><textarea class="form-textarea" id="t-desc" placeholder="Detalhes..."></textarea></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Data</label><input class="form-input" type="date" id="t-data"></div>
-        <div class="form-group"><label class="form-label">Horário</label><input class="form-input" type="time" id="t-hora"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Responsável</label><select class="form-select" id="t-resp"><option>Coordenador</option><option>Assistente</option><option>Ambos</option></select></div>
-        <div class="form-group"><label class="form-label">Prioridade</label><select class="form-select" id="t-prio"><option>Alta</option><option selected>Média</option><option>Baixa</option></select></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="t-status"><option>Não iniciado</option><option>Em andamento</option><option>Aguardando</option><option>Concluído</option></select></div>
-        <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" id="t-cat" placeholder="Ex: Administrativo"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Observações</label><textarea class="form-textarea" id="t-obs" placeholder="Observações..." style="min-height:60px"></textarea></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('task-modal')">Cancelar</button>
-      <button class="btn btn-danger btn-sm" id="btn-del-task" style="display:none" onclick="deleteTask()">Excluir</button>
-      <button class="btn btn-primary" onclick="saveTask()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-ov" id="log-modal" style="display:none" onclick="closeModal('log-modal',event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-head"><span class="modal-title">Novo Registro</span><button class="modal-close" onclick="closeModal('log-modal')">×</button></div>
-    <div class="modal-body">
-      <div class="form-group"><label class="form-label">Tipo</label><select class="form-select" id="log-tipo"><option value="ocorrencia">🔴 Ocorrência</option><option value="decisao">🔵 Decisão</option><option value="reuniao">🟢 Reunião</option><option value="ideia">🟣 Ideia</option><option value="observacao">🟡 Observação</option></select></div>
-      <div class="form-group"><label class="form-label">Descrição</label><textarea class="form-textarea" id="log-texto" placeholder="Descreva o que aconteceu..."></textarea></div>
-    </div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('log-modal')">Cancelar</button><button class="btn btn-primary" onclick="saveLog()">Registrar</button></div>
-  </div>
-</div>
-
-<div class="modal-ov" id="mel-modal" style="display:none" onclick="closeModal('mel-modal',event)">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-head"><span class="modal-title" id="mel-modal-title">Nova Melhoria</span><button class="modal-close" onclick="closeModal('mel-modal')">×</button></div>
-    <div class="modal-body">
-      <div class="form-group"><label class="form-label">Problema identificado</label><textarea class="form-textarea" id="m-problema" placeholder="Qual é o problema?"></textarea></div>
-      <div class="form-group"><label class="form-label">Sugestão</label><textarea class="form-textarea" id="m-sugestao" placeholder="O que pode ser feito?"></textarea></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Prioridade</label><select class="form-select" id="m-prio"><option>Alta</option><option selected>Média</option><option>Baixa</option></select></div>
-        <div class="form-group"><label class="form-label">Impacto</label><select class="form-select" id="m-impacto"><option>Alto</option><option selected>Médio</option><option>Baixo</option></select></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Responsável</label><select class="form-select" id="m-resp"><option>Coordenador</option><option>Assistente</option><option>Equipe</option></select></div>
-        <div class="form-group"><label class="form-label">Prazo</label><input class="form-input" type="date" id="m-prazo"></div>
-      </div>
-      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="m-status"><option>Identificado</option><option>Em análise</option><option>Em execução</option><option>Concluído</option><option>Descartado</option></select></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('mel-modal')">Cancelar</button>
-      <button class="btn btn-danger btn-sm" id="btn-del-mel" style="display:none" onclick="deleteMelhoria()">Excluir</button>
-      <button class="btn btn-primary" onclick="saveMelhoria()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
 // ═══════════════════════════════
-// SUPABASE CONFIG
+// CONFIG
 // ═══════════════════════════════
 const SB_URL = "https://syuqwuqkbkqpysugltky.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5dXF3dXFrYmtxcHlzdWdsdGt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwNTc5MDUsImV4cCI6MjA5OTYzMzkwNX0.gh_wA901Mos_8Sot_hSf9Uu1zm_1IQSzcnJVPFLskrM";
+const EDGE_FN = "https://syuqwuqkbkqpysugltky.supabase.co/functions/v1/nac-ia";
+const SB_HEADERS = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'};
 
 const sb = {
-  headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-  async get(table, params='') {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, { headers: this.headers });
-    if(!r.ok) throw new Error(await r.text());
-    return r.json();
-  },
-  async post(table, data) {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}`, { method:'POST', headers: this.headers, body: JSON.stringify(data) });
-    if(!r.ok) throw new Error(await r.text());
-    return r.json();
-  },
-  async patch(table, id, data) {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers: {...this.headers, 'Prefer':'return=representation'}, body: JSON.stringify(data) });
-    if(!r.ok) throw new Error(await r.text());
-    return r.json();
-  },
-  async delete(table, id) {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, { method:'DELETE', headers: this.headers });
-    if(!r.ok) throw new Error(await r.text());
-  },
-  async upsert(table, data) {
-    const r = await fetch(`${SB_URL}/rest/v1/${table}`, { method:'POST', headers: {...this.headers, 'Prefer':'resolution=merge-duplicates,return=representation'}, body: JSON.stringify(data) });
-    if(!r.ok) throw new Error(await r.text());
-    return r.json();
-  }
+  async get(t,p=''){const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{headers:SB_HEADERS});if(!r.ok)throw new Error(await r.text());return r.json();},
+  async post(t,d){const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:SB_HEADERS,body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();},
+  async patch(t,id,d){const r=await fetch(`${SB_URL}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:{...SB_HEADERS,'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();},
+  async delete(t,id){const r=await fetch(`${SB_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:SB_HEADERS});if(!r.ok)throw new Error(await r.text());},
+  async upsert(t,d){const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_HEADERS,'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
 };
-
-// ═══════════════════════════════
-// STATE
-// ═══════════════════════════════
-let TASKS=[], LOGS={}, MELHORIAS=[], CHECKSTATE={}, IA_HISTORY=[];
-const CHECKS_DEFAULT = {
-  abertura: ['Conferir e-mails','Conferir Teams','Conferir WhatsApp','Conferir agenda do dia','Verificar ocorrências','Conferir atividades do NAC','Verificar pagamentos','Verificar matrículas','Conferir professores','Conferir materiais'],
-  encerramento: ['Atividades concluídas registradas','Pendências documentadas','Demandas para amanhã anotadas','Registros do dia salvos','Setor organizado']
-};
-let CHECKS = JSON.parse(localStorage.getItem('nac_checks')||JSON.stringify(CHECKS_DEFAULT));
-IA_HISTORY = JSON.parse(localStorage.getItem('nac_ia_hist')||'[]');
-
-// sync indicator
-function setSyncStatus(s) {
-  const dot = document.getElementById('sync-dot');
-  const sb = document.getElementById('sb-sync');
-  if(s==='ok'){dot.className='sync-indicator';if(sb)sb.textContent='Sincronizado';}
-  else if(s==='syncing'){dot.className='sync-indicator syncing';if(sb)sb.textContent='Sincronizando...';}
-  else{dot.className='sync-indicator error';if(sb)sb.textContent='Erro de conexão';}
-}
 
 // ═══════════════════════════════
 // UTILS
 // ═══════════════════════════════
-const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-const g = id => (document.getElementById(id)||{}).value||'';
-const escHtml = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const todayStr = () => new Date().toISOString().slice(0,10);
-const fmtDate = s => { if(!s)return'—'; const[y,m,d]=s.split('-'); return`${d}/${m}/${y}`; };
-const fmtDateLong = s => { if(!s)return''; const d=new Date(s+'T12:00:00'); return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'}); };
-const DIAS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-
-function statusBadge(s){const m={'Não iniciado':'b-gray','Em andamento':'b-az','Aguardando':'b-amber','Concluído':'b-green'};return`<span class="badge ${m[s]||'b-gray'}">${s}</span>`;}
-function prioBadge(p){const m={'Alta':'b-red','Média':'b-amber','Baixa':'b-green'};return`<span class="badge ${m[p]||'b-gray'}">${p}</span>`;}
-function melStatusBadge(s){const m={'Identificado':'b-gray','Em análise':'b-az','Em execução':'b-amber','Concluído':'b-green','Descartado':'b-gray'};return`<span class="badge ${m[s]||'b-gray'}">${s}</span>`;}
-
-function toast(msg,type=''){
-  const el=document.getElementById('toast');
-  el.textContent=msg;el.className='toast'+(type?' '+type:'');
-  el.style.display='block';clearTimeout(el._t);
-  el._t=setTimeout(()=>el.style.display='none',2500);
-}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const fmtDate=s=>{if(!s)return'—';const[y,m,d]=s.split('-');return`${d}/${m}/${y}`;};
+const fmtDateLong=s=>{if(!s)return'';return new Date(s+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});};
+const DIAS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const CHECKS_DEFAULT={
+  abertura:['Conferir e-mails','Conferir Teams','Conferir WhatsApp','Conferir agenda','Verificar ocorrências','Conferir atividades NAC','Verificar pagamentos','Verificar matrículas','Conferir professores','Conferir materiais'],
+  encerramento:['Atividades concluídas registradas','Pendências documentadas','Demandas para amanhã','Registros do dia salvos','Setor organizado']
+};
 
 // ═══════════════════════════════
-// INIT — LOAD DATA
+// STYLES (inline for iOS safety)
 // ═══════════════════════════════
-async function loadAll() {
-  setSyncStatus('syncing');
-  try {
-    const [tasks, melhorias, checkstate, logs] = await Promise.all([
-      sb.get('tarefas','order=criado_em.desc'),
-      sb.get('melhorias','order=criado_em.desc'),
-      sb.get('checklist_state'),
-      sb.get('logs','order=criado_em.desc')
-    ]);
-    TASKS = tasks||[];
-    MELHORIAS = melhorias||[];
-    // rebuild CHECKSTATE
-    CHECKSTATE = {};
-    (checkstate||[]).forEach(r => {
-      if(!CHECKSTATE[r.data]) CHECKSTATE[r.data]={};
-      if(!CHECKSTATE[r.data][r.secao]) CHECKSTATE[r.data][r.secao]={};
-      CHECKSTATE[r.data][r.secao][r.indice] = r.concluido;
-    });
-    // rebuild LOGS
-    LOGS = {};
-    (logs||[]).forEach(r => {
-      if(!LOGS[r.data]) LOGS[r.data]=[];
-      LOGS[r.data].push(r);
-    });
-    setSyncStatus('ok');
-    renderPanel(document.querySelector('.panel.active')?.id.replace('panel-',''));
-    updateDBStatus();
-  } catch(e) {
-    setSyncStatus('error');
-    toast('Erro ao carregar dados: '+e.message,'error');
-  }
-}
-
-function updateDBStatus(){
-  const el = document.getElementById('db-status');
-  if(!el) return;
-  el.innerHTML = `
-    ✅ Tarefas: <b>${TASKS.length}</b><br>
-    💡 Melhorias: <b>${MELHORIAS.length}</b><br>
-    📝 Logs hoje: <b>${(LOGS[todayStr()]||[]).length}</b><br>
-    🌐 Banco: <b>Supabase · São Paulo</b><br>
-    🔄 Última sync: <b>${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</b>
-  `;
-}
+const S = {
+  az:'#002B7F', azH:'#001F5C', azL:'#E8EDF8',
+  red:'#D62828', redL:'#FDEAEA',
+  green:'#1A7A4A', greenL:'#E3F5EC',
+  amber:'#B86000', amberL:'#FEF3E2',
+  bg:'#F0F2F8', surface:'#FFFFFF', surface2:'#F7F8FC',
+  border:'#D4D9ED', border2:'#E8EBF5',
+  text:'#111827', text2:'#4B5563', text3:'#9CA3AF',
+};
 
 // ═══════════════════════════════
-// NAVIGATION
+// REUSABLE COMPONENTS
 // ═══════════════════════════════
-const panelTitles={dashboard:'Dashboard',rotina:'Rotina Diária',semana:'Semana',ia:'Assistente IA',melhorias:'Melhorias'};
-function setPanel(id){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(b=>{if(b.getAttribute('onclick')?.includes("'"+id+"'"))b.classList.add('active');});
-  document.getElementById('tb-title').textContent=panelTitles[id]||id;
-  closeSidebar();
-  renderPanel(id);
-}
-function renderPanel(id){
-  if(id==='dashboard')renderDashboard();
-  else if(id==='rotina')renderRotina();
-  else if(id==='semana')renderSemana();
-  else if(id==='melhorias')renderMelhorias();
-  else if(id==='ia'){renderIAPanel();updateDBStatus();}
+function Btn({onClick,children,color,ghost,sm,style={}}){
+  const bg=ghost?'transparent':color||S.az;
+  const border=ghost?`1.5px solid ${S.border}`:'none';
+  const textColor=ghost?S.text2:'#fff';
+  return(
+    <button onClick={onClick} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,padding:sm?'6px 12px':'9px 16px',background:bg,color:textColor,border,borderRadius:8,fontSize:sm?11:13,fontWeight:600,fontFamily:'Inter,sans-serif',cursor:'pointer',WebkitAppearance:'none',...style}}>
+      {children}
+    </button>
+  );
 }
 
-// ═══════════════════════════════
-// THEME / SIDEBAR / CLOCK
-// ═══════════════════════════════
-let isDark=localStorage.getItem('nac_theme')==='dark';
-function applyTheme(){
-  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
-  document.documentElement.style.colorScheme=isDark?'dark':'light';
-  document.body.style.background=isDark?'#0D1117':'#F0F2F8';
-  document.body.style.color=isDark?'#F0F4FF':'#111827';
-  const btn=document.getElementById('theme-btn');
-  if(btn)btn.textContent=isDark?'☀️':'🌙';
-}
-function toggleTheme(){
-  isDark=!isDark;
-  localStorage.setItem('nac_theme',isDark?'dark':'light');
-  applyTheme();
-}
-applyTheme();
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').style.display=document.getElementById('sidebar').classList.contains('open')?'block':'none';}
-function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').style.display='none';}
-function updateClock(){const now=new Date();document.getElementById('tb-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})+' · '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
-updateClock();setInterval(updateClock,30000);
-
-// ═══════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════
-function renderDashboard(){
-  const today=todayStr();
-  const h=new Date().getHours();
-  document.getElementById('dash-greeting').textContent=h<12?'Bom dia! 👋':h<18?'Boa tarde! 👋':'Boa noite! 👋';
-  document.getElementById('dash-subtitle').textContent=fmtDateLong(today)+' — resumo do seu dia';
-  const tarefasHoje=TASKS.filter(t=>t.data===today);
-  const conc=tarefasHoje.filter(t=>t.status==='Concluído').length;
-  const atrasadas=TASKS.filter(t=>t.data&&t.data<today&&t.status!=='Concluído');
-  const melPend=MELHORIAS.filter(m=>['Identificado','Em análise','Em execução'].includes(m.status));
-  const semana=getWeekDates(0).map(d=>d.toISOString().slice(0,10));
-  const tasksSem=TASKS.filter(t=>semana.includes(t.data));
-  document.getElementById('kpi-dash').innerHTML=`
-    <div class="kpi accent"><div class="kpi-n">${tarefasHoje.length}</div><div class="kpi-l">Tarefas hoje</div><div class="kpi-trend">${conc} concluídas</div></div>
-    <div class="kpi red"><div class="kpi-n">${atrasadas.length}</div><div class="kpi-l">Atrasadas</div><div class="kpi-trend">requer atenção</div></div>
-    <div class="kpi"><div class="kpi-n">${tasksSem.length}</div><div class="kpi-l">Na semana</div><div class="kpi-trend">${tasksSem.filter(t=>t.status==='Concluído').length} concluídas</div></div>
-    <div class="kpi amber"><div class="kpi-n">${melPend.length}</div><div class="kpi-l">Melhorias</div><div class="kpi-trend">em andamento</div></div>`;
-  const el=document.getElementById('dash-tasks-today');
-  el.innerHTML=tarefasHoje.length?tarefasHoje.sort((a,b)=>a.hora>b.hora?1:-1).map(t=>taskCard(t)).join(''):`<div class="empty"><div class="empty-icon">📋</div>Sem tarefas para hoje</div>`;
-  const pendEl=document.getElementById('dash-pendencias');
-  pendEl.innerHTML=atrasadas.length?atrasadas.slice(0,5).map(t=>taskCard(t,true)).join(''):`<div class="empty"><div class="empty-icon">✅</div>Nenhuma pendência em atraso</div>`;
-  renderChecklistPreview();
-  const melEl=document.getElementById('dash-melhorias');
-  melEl.innerHTML=melPend.length?melPend.slice(0,4).map(m=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2)"><span class="prio prio-${(m.prioridade||'media').toLowerCase()}"></span><span style="font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml((m.problema||'').slice(0,60))}</span>${melStatusBadge(m.status)}</div>`).join(''):`<div class="empty"><div class="empty-icon">💡</div>Nenhuma melhoria pendente</div>`;
+function Badge({status}){
+  const map={'Não iniciado':[S.surface2,S.text3],'Em andamento':[S.azL,S.az],'Aguardando':[S.amberL,S.amber],'Concluído':[S.greenL,S.green],'Alta':[S.redL,S.red],'Média':[S.amberL,S.amber],'Baixa':[S.greenL,S.green],'Identificado':[S.surface2,S.text3],'Em análise':[S.azL,S.az],'Em execução':[S.amberL,S.amber],'Descartado':[S.surface2,S.text3]};
+  const[bg,color]=map[status]||[S.surface2,S.text3];
+  return <span style={{display:'inline-block',padding:'2px 8px',borderRadius:5,fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:.3,background:bg,color,whiteSpace:'nowrap'}}>{status}</span>;
 }
 
-function taskCard(t,showDate=false){
-  const prio={'Alta':'prio-alta','Média':'prio-media','Baixa':'prio-baixa'}[t.prioridade]||'prio-media';
-  return`<div class="task-item${t.status==='Concluído'?' done-task':''}" onclick="openTaskModal('${t.id}')">
-    <span class="prio ${prio}" style="margin-top:5px"></span>
-    <div class="task-info">
-      <div class="task-title">${escHtml(t.titulo||'')}</div>
-      <div class="task-meta">${showDate?`<span>📅 ${fmtDate(t.data)}</span>`:''} ${t.hora?`<span>🕐 ${t.hora}</span>`:''}<span>👤 ${t.responsavel||''}</span>${statusBadge(t.status)}</div>
+function KPI({n,label,trend,accent,red,green,amber}){
+  const bg=accent?S.az:S.surface;
+  const nColor=accent?'#fff':red?S.red:green?S.green:amber?S.amber:S.az;
+  const lColor=accent?'rgba(255,255,255,.55)':S.text3;
+  const borderLeft=red?`3px solid ${S.red}`:green?`3px solid ${S.green}`:amber?`3px solid ${S.amber}`:'1px solid '+S.border;
+  return(
+    <div style={{background:bg,border:accent?`1px solid ${S.az}`:`1px solid ${S.border}`,borderLeft,borderRadius:12,padding:'14px 16px',display:'flex',flexDirection:'column',gap:4,boxShadow:'0 1px 2px rgba(0,43,127,.06)'}}>
+      <div style={{fontFamily:'Montserrat,sans-serif',fontSize:28,fontWeight:800,lineHeight:1,color:nColor}}>{n}</div>
+      <div style={{fontSize:10,fontWeight:600,color:lColor,textTransform:'uppercase',letterSpacing:.6}}>{label}</div>
+      {trend&&<div style={{fontSize:11,fontWeight:600,color:accent?'rgba(255,255,255,.7)':S.text3}}>{trend}</div>}
     </div>
-  </div>`;
+  );
 }
 
-function renderChecklistPreview(){
-  const today=todayStr();
-  const items=CHECKS.abertura||[];
-  const states=(CHECKSTATE[today]||{}).abertura||{};
-  const done=items.filter((_,i)=>states[i]).length;
-  document.getElementById('check-progress-badge').textContent=`${done}/${items.length}`;
-  document.getElementById('dash-checklist-preview').innerHTML=items.slice(0,6).map((item,i)=>`
-    <div class="check-item${states[i]?' done':''}" onclick="toggleCheckDash('abertura',${i})">
-      <input type="checkbox" ${states[i]?'checked':''} readonly><span class="check-label">${escHtml(item)}</span>
-    </div>`).join('')+(items.length>6?`<div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">+${items.length-6} itens na Rotina Diária</div>`:'');
+function Card({children,style={}}){
+  return <div style={{background:S.surface,border:`1px solid ${S.border}`,borderRadius:12,boxShadow:'0 1px 2px rgba(0,43,127,.06)',...style}}>{children}</div>;
 }
 
-async function toggleCheckDash(section,idx){
-  const today=todayStr();
-  if(!CHECKSTATE[today])CHECKSTATE[today]={};
-  if(!CHECKSTATE[today][section])CHECKSTATE[today][section]={};
-  const newVal=!CHECKSTATE[today][section][idx];
-  CHECKSTATE[today][section][idx]=newVal;
-  renderChecklistPreview();
-  try{
-    await sb.upsert('checklist_state',{id:`${today}_${section}_${idx}`,data:today,secao:section,indice:idx,concluido:newVal});
-  }catch(e){toast('Erro ao salvar checklist','error');}
+function CardHead({title,right}){
+  return(
+    <div style={{padding:'14px 16px',borderBottom:`1px solid ${S.border2}`,display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+      <span style={{fontSize:13,fontWeight:700,color:S.text}}>{title}</span>
+      {right}
+    </div>
+  );
 }
 
-async function gerarBriefing(){
-  const box=document.getElementById('briefing-box');
-  const content=document.getElementById('briefing-content');
-  box.style.display='block';
-  content.textContent='Analisando os dados do NAC...';
-  try{
-    const r=await callClaude('Faça um briefing completo do dia, analisando todas as tarefas, checklists, pendências e melhorias. Seja direto e use bullets. Máximo 300 palavras.');
-    content.innerHTML=r.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-  }catch(e){content.textContent='Erro ao gerar briefing.';}
+function FormInput({label,value,onChange,type='text',placeholder=''}){
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+      <label style={{fontSize:10,fontWeight:700,color:S.text2,textTransform:'uppercase',letterSpacing:.5}}>{label}</label>
+      <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
+        style={{width:'100%',padding:'9px 11px',border:`1.5px solid ${S.border}`,borderRadius:8,fontSize:13,color:S.text,background:S.surface,outline:'none',WebkitAppearance:'none'}}/>
+    </div>
+  );
+}
+
+function FormSelect({label,value,onChange,options}){
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+      <label style={{fontSize:10,fontWeight:700,color:S.text2,textTransform:'uppercase',letterSpacing:.5}}>{label}</label>
+      <select value={value} onChange={e=>onChange(e.target.value)}
+        style={{width:'100%',padding:'9px 11px',border:`1.5px solid ${S.border}`,borderRadius:8,fontSize:13,color:S.text,background:S.surface,outline:'none',WebkitAppearance:'none'}}>
+        {options.map(o=><option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function FormTextarea({label,value,onChange,placeholder='',rows=3}){
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:4}}>
+      <label style={{fontSize:10,fontWeight:700,color:S.text2,textTransform:'uppercase',letterSpacing:.5}}>{label}</label>
+      <textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows}
+        style={{width:'100%',padding:'9px 11px',border:`1.5px solid ${S.border}`,borderRadius:8,fontSize:13,color:S.text,background:S.surface,outline:'none',resize:'vertical',lineHeight:1.5,fontFamily:'Inter,sans-serif',WebkitAppearance:'none'}}/>
+    </div>
+  );
+}
+
+function Modal({title,onClose,children,footer}){
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.5)',zIndex:200,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={onClose}>
+      <div style={{background:S.surface,borderRadius:'14px 14px 0 0',width:'100%',maxWidth:540,maxHeight:'92vh',overflowY:'auto',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
+        <div style={{background:S.az,padding:'13px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',borderRadius:'14px 14px 0 0',position:'sticky',top:0,zIndex:1}}>
+          <span style={{color:'#fff',fontSize:13,fontWeight:700}}>{title}</span>
+          <button onClick={onClose} style={{background:'rgba(255,255,255,.2)',border:'none',color:'#fff',width:26,height:26,borderRadius:'50%',fontSize:15,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',WebkitAppearance:'none'}}>×</button>
+        </div>
+        <div style={{padding:16,display:'flex',flexDirection:'column',gap:12,flex:1}}>{children}</div>
+        {footer&&<div style={{padding:'12px 16px',borderTop:`1px solid ${S.border}`,display:'flex',gap:8,justifyContent:'flex-end'}}>{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+function Toast({msg,type,onHide}){
+  useEffect(()=>{if(msg){const t=setTimeout(onHide,2500);return()=>clearTimeout(t);}},[msg]);
+  if(!msg)return null;
+  const bg=type==='success'?S.green:type==='error'?S.red:S.az;
+  return <div style={{position:'fixed',bottom:20,left:'50%',transform:'translateX(-50%)',background:bg,color:'#fff',padding:'10px 18px',borderRadius:8,fontSize:12,fontWeight:700,zIndex:999,whiteSpace:'nowrap',boxShadow:'0 4px 16px rgba(0,43,127,.25)'}}>{msg}</div>;
 }
 
 // ═══════════════════════════════
-// ROTINA
+// PANELS
 // ═══════════════════════════════
-let rotinaDay=todayStr();
-function changeRotinaDay(d){const dt=new Date(rotinaDay+'T12:00:00');dt.setDate(dt.getDate()+d);rotinaDay=dt.toISOString().slice(0,10);renderRotina();}
-function renderRotina(){
-  document.getElementById('rotina-date-label').textContent=fmtDateLong(rotinaDay);
-  renderChecklist('abertura');renderChecklist('encerramento');renderStars();renderLogs();
+function Dashboard({tasks,melhorias,checkState,checks,onToggleCheck,onNewTask,onOpenTask,onBriefing,briefing,briefingLoading}){
+  const today=todayStr();
+  const tarefasHoje=tasks.filter(t=>t.data===today);
+  const conc=tarefasHoje.filter(t=>t.status==='Concluído').length;
+  const atrasadas=tasks.filter(t=>t.data&&t.data<today&&t.status!=='Concluído');
+  const melPend=melhorias.filter(m=>['Identificado','Em análise','Em execução'].includes(m.status));
+  const h=new Date().getHours();
+  const greeting=h<12?'Bom dia! 👋':h<18?'Boa tarde! 👋':'Boa noite! 👋';
+  const abertura=checks.abertura||[];
+  const states=(checkState[today]||{}).abertura||{};
+  const checkDone=abertura.filter((_,i)=>states[i]).length;
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:14}}>
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+        <div>
+          <div style={{fontFamily:'Montserrat,sans-serif',fontSize:16,fontWeight:800,color:S.text}}>{greeting}</div>
+          <div style={{fontSize:11,color:S.text3,marginTop:2}}>{fmtDateLong(today)}</div>
+        </div>
+        <Btn onClick={onBriefing} style={{background:S.az}}>✨ Briefing IA</Btn>
+      </div>
+
+      {briefingLoading&&<Card><div style={{padding:16,fontSize:13,color:S.text3,fontStyle:'italic'}}>Analisando dados do NAC...</div></Card>}
+      {briefing&&!briefingLoading&&(
+        <Card>
+          <CardHead title="🤖 Briefing do dia" right={<button onClick={()=>onBriefing(true)} style={{background:'none',border:'none',fontSize:16,cursor:'pointer',color:S.text3}}>×</button>}/>
+          <div style={{padding:16,fontSize:13,lineHeight:1.7,color:S.text,whiteSpace:'pre-wrap'}}>{briefing}</div>
+        </Card>
+      )}
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <KPI n={tarefasHoje.length} label="Tarefas hoje" trend={`${conc} concluídas`} accent/>
+        <KPI n={atrasadas.length} label="Atrasadas" trend="requer atenção" red/>
+        <KPI n={melPend.length} label="Melhorias" trend="em andamento" amber/>
+        <KPI n={checkDone+'/'+abertura.length} label="Checklist" trend="abertura"/>
+      </div>
+
+      <Card>
+        <CardHead title="📋 Tarefas de hoje" right={<Btn sm onClick={()=>onNewTask(today)}>+ Adicionar</Btn>}/>
+        <div style={{padding:16,display:'flex',flexDirection:'column',gap:8}}>
+          {tarefasHoje.length===0?<div style={{textAlign:'center',padding:'20px 0',color:S.text3,fontSize:12}}>Sem tarefas para hoje</div>:
+            tarefasHoje.sort((a,b)=>a.hora>b.hora?1:-1).map(t=>(
+              <TaskItem key={t.id} task={t} onClick={()=>onOpenTask(t)}/>
+            ))
+          }
+        </div>
+      </Card>
+
+      {atrasadas.length>0&&(
+        <Card>
+          <CardHead title="⚠️ Pendências em atraso"/>
+          <div style={{padding:16,display:'flex',flexDirection:'column',gap:8}}>
+            {atrasadas.slice(0,4).map(t=><TaskItem key={t.id} task={t} onClick={()=>onOpenTask(t)} showDate/>)}
+          </div>
+        </Card>
+      )}
+
+      <Card>
+        <CardHead title="✅ Checklist de abertura" right={<span style={{background:S.surface2,color:S.text3,padding:'2px 8px',borderRadius:5,fontSize:10,fontWeight:700}}>{checkDone}/{abertura.length}</span>}/>
+        <div style={{padding:16}}>
+          {abertura.slice(0,6).map((item,i)=>(
+            <div key={i} onClick={()=>onToggleCheck('abertura',i)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:i<Math.min(abertura.length,6)-1?`1px solid ${S.border2}`:'none',cursor:'pointer'}}>
+              <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${states[i]?S.az:S.border}`,background:states[i]?S.az:'transparent',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                {states[i]&&<span style={{color:'#fff',fontSize:11,fontWeight:700}}>✓</span>}
+              </div>
+              <span style={{fontSize:13,color:states[i]?S.text3:S.text,textDecoration:states[i]?'line-through':'none',flex:1}}>{item}</span>
+            </div>
+          ))}
+          {abertura.length>6&&<div style={{fontSize:11,color:S.text3,textAlign:'center',marginTop:8}}>+{abertura.length-6} itens na Rotina Diária</div>}
+        </div>
+      </Card>
+    </div>
+  );
 }
-function renderChecklist(section){
-  const items=CHECKS[section]||[];
-  const states=(CHECKSTATE[rotinaDay]||{})[section]||{};
-  const done=items.filter((_,i)=>states[i]).length;
-  document.getElementById('check-'+section).innerHTML=items.map((item,i)=>`
-    <div class="check-item${states[i]?' done':''}" onclick="toggleCheck('${section}',${i})">
-      <input type="checkbox" ${states[i]?'checked':''} readonly>
-      <span class="check-label">${escHtml(item)}</span>
-      <button class="btn-icon" style="width:22px;height:22px;font-size:10px" onclick="event.stopPropagation();removeCheckItem('${section}',${i})">✕</button>
-    </div>`).join('')||'<div class="empty">Clique em + para adicionar itens.</div>';
-  if(document.getElementById('prog-'+section)){
-    const pct=items.length?Math.round(done/items.length*100):0;
-    document.getElementById('prog-'+section).style.width=pct+'%';
-    document.getElementById('prog-'+section+'-label').textContent=`${done}/${items.length} concluídos`;
-  }
+
+function TaskItem({task,onClick,showDate}){
+  const prioColor={'Alta':S.red,'Média':S.amber,'Baixa':S.green}[task.prioridade]||S.text3;
+  return(
+    <div onClick={onClick} style={{background:S.surface,border:`1px solid ${S.border}`,borderRadius:8,padding:'10px 12px',display:'flex',alignItems:'flex-start',gap:10,cursor:'pointer',opacity:task.status==='Concluído'?.6:1}}>
+      <div style={{width:8,height:8,borderRadius:'50%',background:prioColor,marginTop:5,flexShrink:0}}/>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:13,fontWeight:600,color:S.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{task.titulo}</div>
+        <div style={{fontSize:10,color:S.text3,marginTop:2,display:'flex',gap:6,flexWrap:'wrap',alignItems:'center'}}>
+          {showDate&&<span>📅 {fmtDate(task.data)}</span>}
+          {task.hora&&<span>🕐 {task.hora}</span>}
+          <span>👤 {task.responsavel}</span>
+          <Badge status={task.status}/>
+        </div>
+      </div>
+    </div>
+  );
 }
-async function toggleCheck(section,idx){
-  if(!CHECKSTATE[rotinaDay])CHECKSTATE[rotinaDay]={};
-  if(!CHECKSTATE[rotinaDay][section])CHECKSTATE[rotinaDay][section]={};
-  const newVal=!CHECKSTATE[rotinaDay][section][idx];
-  CHECKSTATE[rotinaDay][section][idx]=newVal;
-  renderChecklist(section);
-  try{await sb.upsert('checklist_state',{id:`${rotinaDay}_${section}_${idx}`,data:rotinaDay,secao:section,indice:idx,concluido:newVal});}
-  catch(e){toast('Erro ao salvar','error');}
-}
-function addCheckItem(section){
-  const text=prompt('Nome do item:');if(!text?.trim())return;
-  CHECKS[section]=[...(CHECKS[section]||[]),text.trim()];
-  localStorage.setItem('nac_checks',JSON.stringify(CHECKS));
-  renderChecklist(section);
-}
-function removeCheckItem(section,idx){
-  if(!confirm('Remover este item?'))return;
-  CHECKS[section].splice(idx,1);
-  localStorage.setItem('nac_checks',JSON.stringify(CHECKS));
-  renderChecklist(section);
-}
-function renderStars(){
-  const cs=(CHECKSTATE[rotinaDay]||{});
-  const val=cs._stars||0;
-  document.getElementById('stars-prod').innerHTML=[1,2,3,4,5].map(i=>`<span class="star${val>=i?' on':''}" onclick="setStar(${i})">★</span>`).join('');
-}
-async function setStar(n){
-  if(!CHECKSTATE[rotinaDay])CHECKSTATE[rotinaDay]={};
-  CHECKSTATE[rotinaDay]._stars=n;
-  renderStars();
-  try{await sb.upsert('checklist_state',{id:`${rotinaDay}_stars_0`,data:rotinaDay,secao:'stars',indice:0,concluido:n>3});}catch(e){}
-  toast(`Produtividade: ${n}/5 ⭐`,'success');
-}
-function renderLogs(){
-  const logs=(LOGS[rotinaDay]||[]).slice().reverse();
-  const el=document.getElementById('log-list');
+
+function Rotina({checkState,checks,logs,rotinaDay,onChangeDay,onToggleCheck,onAddCheck,onSaveLog,stars,onSetStar}){
+  const [logModal,setLogModal]=useState(false);
+  const [logTipo,setLogTipo]=useState('ocorrencia');
+  const [logTexto,setLogTexto]=useState('');
+  const states=checkState[rotinaDay]||{};
+  const todayLogs=(logs[rotinaDay]||[]).slice().reverse();
   const tipoLabel={ocorrencia:'🔴 Ocorrência',decisao:'🔵 Decisão',reuniao:'🟢 Reunião',ideia:'🟣 Ideia',observacao:'🟡 Observação'};
-  el.innerHTML=logs.length?logs.map(l=>`
-    <div class="log-item ${l.tipo}">
-      <div class="log-type">${tipoLabel[l.tipo]||l.tipo}</div>
-      <div class="log-text">${escHtml(l.texto)}</div>
-      <div class="log-time">${l.hora||''} · <button onclick="deleteLog('${l.id}')" style="background:none;border:none;color:var(--red);font-size:10px;cursor:pointer">remover</button></div>
-    </div>`).join(''):`<div class="empty"><div class="empty-icon">📝</div>Nenhum registro ainda.</div>`;
-}
-function openLogModal(){document.getElementById('log-modal').style.display='flex';}
-async function saveLog(){
-  const tipo=g('log-tipo'),texto=g('log-texto');
-  if(!texto.trim()){toast('Descreva o registro','error');return;}
-  const hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  const item={id:uid(),data:rotinaDay,tipo,texto,hora};
-  try{
-    setSyncStatus('syncing');
-    await sb.post('logs',item);
-    if(!LOGS[rotinaDay])LOGS[rotinaDay]=[];
-    LOGS[rotinaDay].push(item);
-    document.getElementById('log-texto').value='';
-    closeModal('log-modal');
-    renderLogs();setSyncStatus('ok');
-    toast('Registrado!','success');
-  }catch(e){setSyncStatus('error');toast('Erro ao salvar: '+e.message,'error');}
-}
-async function deleteLog(id){
-  if(!confirm('Remover este registro?'))return;
-  try{
-    await sb.delete('logs',id);
-    Object.keys(LOGS).forEach(d=>{LOGS[d]=LOGS[d].filter(l=>l.id!==id);});
-    renderLogs();toast('Removido.');
-  }catch(e){toast('Erro ao remover','error');}
+  const tipoBorder={ocorrencia:S.red,decisao:S.az,reuniao:S.green,ideia:'#5B2D8E',observacao:S.amber};
+
+  function handleSaveLog(){
+    if(!logTexto.trim())return;
+    onSaveLog({tipo:logTipo,texto:logTexto});
+    setLogTexto('');setLogModal(false);
+  }
+
+  function Checklist({section,title}){
+    const items=checks[section]||[];
+    const sec=states[section]||{};
+    const done=items.filter((_,i)=>sec[i]).length;
+    const pct=items.length?Math.round(done/items.length*100):0;
+    return(
+      <Card>
+        <CardHead title={title} right={<button onClick={()=>onAddCheck(section)} style={{background:'none',border:`1px solid ${S.border}`,borderRadius:6,width:26,height:26,fontSize:14,cursor:'pointer',color:S.text2,display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>}/>
+        <div style={{padding:16}}>
+          {items.map((item,i)=>(
+            <div key={i} onClick={()=>onToggleCheck(rotinaDay,section,i)} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderBottom:i<items.length-1?`1px solid ${S.border2}`:'none',cursor:'pointer'}}>
+              <div style={{width:18,height:18,borderRadius:4,border:`2px solid ${sec[i]?S.az:S.border}`,background:sec[i]?S.az:'transparent',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                {sec[i]&&<span style={{color:'#fff',fontSize:11,fontWeight:700}}>✓</span>}
+              </div>
+              <span style={{fontSize:13,color:sec[i]?S.text3:S.text,textDecoration:sec[i]?'line-through':'none',flex:1}}>{item}</span>
+            </div>
+          ))}
+          <div style={{marginTop:10}}>
+            <div style={{height:6,background:S.border2,borderRadius:3,overflow:'hidden'}}>
+              <div style={{height:'100%',width:pct+'%',background:S.az,borderRadius:3,transition:'width .4s'}}/>
+            </div>
+            <div style={{fontSize:10,color:S.text3,marginTop:4,textAlign:'right'}}>{done}/{items.length} concluídos</div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  const starVal=(states._stars)||0;
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:14}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <div>
+          <div style={{fontFamily:'Montserrat,sans-serif',fontSize:16,fontWeight:800,color:S.text}}>Rotina Diária</div>
+          <div style={{fontSize:11,color:S.text3}}>{fmtDateLong(rotinaDay)}</div>
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          <Btn ghost sm onClick={()=>onChangeDay(-1)}>‹</Btn>
+          <Btn ghost sm onClick={()=>onChangeDay(1)}>›</Btn>
+        </div>
+      </div>
+
+      <Checklist section="abertura" title="🌅 Antes de iniciar"/>
+      <Checklist section="encerramento" title="🌆 Encerramento"/>
+
+      <Card>
+        <CardHead title="⭐ Produtividade do dia"/>
+        <div style={{padding:16,display:'flex',gap:8}}>
+          {[1,2,3,4,5].map(i=>(
+            <button key={i} onClick={()=>onSetStar(rotinaDay,i)} style={{fontSize:28,background:'none',border:'none',cursor:'pointer',color:starVal>=i?'#F59E0B':S.border,padding:0}}>★</button>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <CardHead title="📝 Registros do dia" right={<Btn sm onClick={()=>setLogModal(true)}>+ Registrar</Btn>}/>
+        <div style={{padding:16}}>
+          {todayLogs.length===0?<div style={{textAlign:'center',padding:'20px 0',color:S.text3,fontSize:12}}>Nenhum registro ainda</div>:
+            todayLogs.map((l,i)=>(
+              <div key={i} style={{padding:'10px 12px',background:S.surface2,borderRadius:8,borderLeft:`3px solid ${tipoBorder[l.tipo]||S.border}`,marginBottom:8}}>
+                <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:.5,color:S.text3,marginBottom:3}}>{tipoLabel[l.tipo]||l.tipo}</div>
+                <div style={{fontSize:13,color:S.text,lineHeight:1.5}}>{l.texto}</div>
+                <div style={{fontSize:10,color:S.text3,marginTop:4}}>{l.hora}</div>
+              </div>
+            ))
+          }
+        </div>
+      </Card>
+
+      {logModal&&(
+        <Modal title="Novo Registro" onClose={()=>setLogModal(false)} footer={<><Btn ghost onClick={()=>setLogModal(false)}>Cancelar</Btn><Btn onClick={handleSaveLog}>Registrar</Btn></>}>
+          <FormSelect label="Tipo" value={logTipo} onChange={setLogTipo} options={['ocorrencia','decisao','reuniao','ideia','observacao']}/>
+          <FormTextarea label="Descrição" value={logTexto} onChange={setLogTexto} placeholder="Descreva o que aconteceu..." rows={4}/>
+        </Modal>
+      )}
+    </div>
+  );
 }
 
-// ═══════════════════════════════
-// SEMANA
-// ═══════════════════════════════
-let weekOffset=0,editTaskId=null;
-function getWeekDates(offset=0){
-  const now=new Date(),day=now.getDay(),monday=new Date(now);
-  monday.setDate(now.getDate()-day+1+offset*7);
-  return[0,1,2,3,4].map(i=>{const d=new Date(monday);d.setDate(monday.getDate()+i);return d;});
-}
-function changeWeek(dir){if(dir===0)weekOffset=0;else weekOffset+=dir;renderSemana();}
-function renderSemana(){
+function RotinaWeekView({tasks,checkState,checks,logs,onToggleCheck,onNewTask,onOpenTask,onSaveLog,onSetStar,weekOffset,onChangeWeek}){
+  const [logDay,setLogDay]=useState(null);
+  const [logTipo,setLogTipo]=useState('ocorrencia');
+  const [logTexto,setLogTexto]=useState('');
+  const today=todayStr();
+
+  function getWeekDates(offset){
+    const now=new Date(),day=now.getDay(),mon=new Date(now);
+    mon.setDate(now.getDate()-day+1+offset*7);
+    return[0,1,2,3,4].map(i=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+  }
+
   const dates=getWeekDates(weekOffset);
   const start=dates[0].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
   const end=dates[4].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-  document.getElementById('semana-label').textContent=`${start} a ${end}`;
-  const fs=g('f-task-status'),fr=g('f-task-resp'),today=todayStr();
-  document.getElementById('week-grid').innerHTML=dates.map(d=>{
-    const ds=d.toISOString().slice(0,10),isToday=ds===today;
-    let tasks=TASKS.filter(t=>t.data===ds);
-    if(fs)tasks=tasks.filter(t=>t.status===fs);
-    if(fr)tasks=tasks.filter(t=>t.responsavel===fr);
-    return`<div class="day-col">
-      <div class="day-head" style="${isToday?'background:var(--az-l)':''}">
-        <span class="day-name" style="${isToday?'color:var(--az)':''}">${DIAS_PT[d.getDay()]}</span>
-        <span class="day-date" style="${isToday?'font-weight:700;color:var(--az)':''}">${d.getDate()}/${String(d.getMonth()+1).padStart(2,'0')}</span>
-      </div>
-      <div class="day-tasks">${tasks.map(t=>`
-        <div class="day-task" onclick="openTaskModal('${t.id}')">
-          <div class="day-task-title" style="${t.status==='Concluído'?'text-decoration:line-through;color:var(--text3)':''}">${escHtml(t.titulo||'')}</div>
-          <div class="day-task-meta"><span class="prio prio-${(t.prioridade||'media').toLowerCase()}"></span>${prioBadge(t.prioridade)}${t.hora?`<span>${t.hora}</span>`:''}</div>
-        </div>`).join('')}</div>
-      <div class="day-add" onclick="openTaskModal(null,'${ds}')"><span>+</span><span>Adicionar</span></div>
-    </div>`;
-  }).join('');
-  const allDates=dates.map(d=>d.toISOString().slice(0,10));
-  let all=TASKS.filter(t=>allDates.includes(t.data));
-  if(fs)all=all.filter(t=>t.status===fs);if(fr)all=all.filter(t=>t.responsavel===fr);
-  all.sort((a,b)=>a.data===b.data?a.hora>b.hora?1:-1:a.data>b.data?1:-1);
-  document.getElementById('semana-list').innerHTML=all.length?`<div style="display:flex;flex-direction:column;gap:8px">${all.map(t=>taskCard(t,true)).join('')}</div>`:`<div class="empty"><div class="empty-icon">📅</div>Sem tarefas nesta semana</div>`;
-}
 
-// ═══════════════════════════════
-// TAREFAS
-// ═══════════════════════════════
-function openTaskModal(id=null,date=null){
-  editTaskId=id;
-  document.getElementById('task-modal-title').textContent=id?'Editar Tarefa':'Nova Tarefa';
-  document.getElementById('btn-del-task').style.display=id?'flex':'none';
-  const data=id?TASKS.find(t=>t.id===id):null;
-  document.getElementById('t-titulo').value=data?.titulo||'';
-  document.getElementById('t-desc').value=data?.descricao||'';
-  document.getElementById('t-data').value=data?.data||date||todayStr();
-  document.getElementById('t-hora').value=data?.hora||'';
-  document.getElementById('t-resp').value=data?.responsavel||'Coordenador';
-  document.getElementById('t-prio').value=data?.prioridade||'Média';
-  document.getElementById('t-status').value=data?.status||'Não iniciado';
-  document.getElementById('t-cat').value=data?.categoria||'';
-  document.getElementById('t-obs').value=data?.observacoes||'';
-  document.getElementById('task-modal').style.display='flex';
-  setTimeout(()=>document.getElementById('t-titulo').focus(),150);
-}
-async function saveTask(){
-  const titulo=g('t-titulo');if(!titulo.trim()){toast('Informe o título','error');return;}
-  const item={id:editTaskId||uid(),titulo,descricao:g('t-desc'),data:g('t-data'),hora:g('t-hora'),responsavel:g('t-resp'),prioridade:g('t-prio'),status:g('t-status'),categoria:g('t-cat'),observacoes:g('t-obs')};
-  try{
-    setSyncStatus('syncing');
-    if(editTaskId){await sb.patch('tarefas',editTaskId,item);TASKS=TASKS.map(t=>t.id===editTaskId?{...t,...item}:t);}
-    else{await sb.post('tarefas',item);TASKS.unshift(item);}
-    closeModal('task-modal');setSyncStatus('ok');
-    toast(editTaskId?'Tarefa atualizada!':'Tarefa criada!','success');
-    renderPanel(document.querySelector('.panel.active')?.id.replace('panel-',''));
-  }catch(e){setSyncStatus('error');toast('Erro ao salvar: '+e.message,'error');}
-}
-async function deleteTask(){
-  if(!confirm('Excluir esta tarefa?'))return;
-  try{
-    await sb.delete('tarefas',editTaskId);
-    TASKS=TASKS.filter(t=>t.id!==editTaskId);
-    closeModal('task-modal');setSyncStatus('ok');
-    toast('Tarefa excluída.');
-    renderPanel(document.querySelector('.panel.active')?.id.replace('panel-',''));
-  }catch(e){toast('Erro ao excluir','error');}
-}
+  const tipoLabel={ocorrencia:'🔴',decisao:'🔵',reuniao:'🟢',ideia:'🟣',observacao:'🟡'};
+  const tipoBorder={ocorrencia:S.red,decisao:S.az,reuniao:S.green,ideia:'#5B2D8E',observacao:S.amber};
 
-// ═══════════════════════════════
-// MELHORIAS
-// ═══════════════════════════════
-let editMelId=null;
-function openMelhoriaModal(id=null){
-  editMelId=id;
-  const data=id?MELHORIAS.find(m=>m.id===id):null;
-  document.getElementById('mel-modal-title').textContent=id?'Editar Melhoria':'Nova Melhoria';
-  document.getElementById('btn-del-mel').style.display=id?'flex':'none';
-  document.getElementById('m-problema').value=data?.problema||'';
-  document.getElementById('m-sugestao').value=data?.sugestao||'';
-  document.getElementById('m-prio').value=data?.prioridade||'Média';
-  document.getElementById('m-impacto').value=data?.impacto||'Médio';
-  document.getElementById('m-resp').value=data?.responsavel||'Coordenador';
-  document.getElementById('m-prazo').value=data?.prazo||'';
-  document.getElementById('m-status').value=data?.status||'Identificado';
-  document.getElementById('mel-modal').style.display='flex';
-}
-async function saveMelhoria(){
-  const problema=g('m-problema');if(!problema.trim()){toast('Descreva o problema','error');return;}
-  const item={id:editMelId||uid(),problema,sugestao:g('m-sugestao'),prioridade:g('m-prio'),impacto:g('m-impacto'),responsavel:g('m-resp'),prazo:g('m-prazo'),status:g('m-status')};
-  try{
-    setSyncStatus('syncing');
-    if(editMelId){await sb.patch('melhorias',editMelId,item);MELHORIAS=MELHORIAS.map(m=>m.id===editMelId?{...m,...item}:m);}
-    else{await sb.post('melhorias',item);MELHORIAS.unshift(item);}
-    closeModal('mel-modal');setSyncStatus('ok');
-    toast(editMelId?'Atualizado!':'Melhoria registrada!','success');
-    renderMelhorias();
-  }catch(e){setSyncStatus('error');toast('Erro: '+e.message,'error');}
-}
-async function deleteMelhoria(){
-  if(!confirm('Excluir esta melhoria?'))return;
-  try{
-    await sb.delete('melhorias',editMelId);
-    MELHORIAS=MELHORIAS.filter(m=>m.id!==editMelId);
-    closeModal('mel-modal');toast('Excluído.');renderMelhorias();
-  }catch(e){toast('Erro ao excluir','error');}
-}
-function renderMelhorias(){
-  const fs=g('f-mel-status'),fp=g('f-mel-prio');
-  let list=MELHORIAS.filter(m=>{if(fs&&m.status!==fs)return false;if(fp&&m.prioridade!==fp)return false;return true;});
-  const total=MELHORIAS.length,emAnd=MELHORIAS.filter(m=>m.status==='Em execução').length,conc=MELHORIAS.filter(m=>m.status==='Concluído').length,alta=MELHORIAS.filter(m=>m.prioridade==='Alta'&&m.status!=='Concluído').length;
-  document.getElementById('kpi-melhorias').innerHTML=`
-    <div class="kpi"><div class="kpi-n">${total}</div><div class="kpi-l">Total</div></div>
-    <div class="kpi amber"><div class="kpi-n">${emAnd}</div><div class="kpi-l">Em execução</div></div>
-    <div class="kpi green"><div class="kpi-n">${conc}</div><div class="kpi-l">Concluídas</div></div>
-    <div class="kpi red"><div class="kpi-n">${alta}</div><div class="kpi-l">Alta prioridade</div></div>`;
-  const el=document.getElementById('list-melhorias');
-  if(!list.length){el.innerHTML=`<div class="card card-p"><div class="empty"><div class="empty-icon">💡</div>Nenhuma melhoria. Clique em <b>+ Nova melhoria</b>.</div></div>`;return;}
-  const prioOrder={'Alta':0,'Média':1,'Baixa':2};
-  list.sort((a,b)=>(prioOrder[a.prioridade]||1)-(prioOrder[b.prioridade]||1));
-  el.innerHTML=list.map(m=>`
-    <div class="card">
-      <div class="card-head" style="cursor:pointer" onclick="openMelhoriaModal('${m.id}')">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
-            <span class="prio prio-${(m.prioridade||'media').toLowerCase()}"></span>
-            <span style="font-size:13px;font-weight:700">${escHtml((m.problema||'').slice(0,80))}${(m.problema||'').length>80?'…':''}</span>
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${prioBadge(m.prioridade)}${melStatusBadge(m.status)}<span style="font-size:10px;color:var(--text3)">👤 ${m.responsavel}</span>${m.prazo?`<span style="font-size:10px;color:var(--text3)">📅 ${fmtDate(m.prazo)}</span>`:''}</div>
+  function handleSaveLog(){
+    if(!logTexto.trim())return;
+    onSaveLog(logDay,{tipo:logTipo,texto:logTexto});
+    setLogTexto('');setLogDay(null);
+  }
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:14}}>
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+        <div>
+          <div style={{fontFamily:'Montserrat,sans-serif',fontSize:16,fontWeight:800,color:S.text}}>Rotina Semanal</div>
+          <div style={{fontSize:11,color:S.text3}}>{start} a {end}</div>
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          <Btn ghost sm onClick={()=>onChangeWeek(-1)}>‹</Btn>
+          <Btn ghost sm onClick={()=>onChangeWeek(0)}>Hoje</Btn>
+          <Btn ghost sm onClick={()=>onChangeWeek(1)}>›</Btn>
         </div>
       </div>
-      ${m.sugestao?`<div class="card-body" style="border-top:1px solid var(--border2)"><div style="font-size:12px;color:var(--text2);line-height:1.6">💬 ${escHtml(m.sugestao)}</div></div>`:''}
-    </div>`).join('');
+
+      {/* Horizontal scroll container */}
+      <div style={{overflowX:'auto',paddingBottom:8}}>
+        <div style={{display:'flex',gap:10,minWidth:'max-content'}}>
+          {dates.map(d=>{
+            const ds=d.toISOString().slice(0,10);
+            const isToday=ds===today;
+            const states=(checkState[ds]||{});
+            const abertura=checks.abertura||[];
+            const encerramento=checks.encerramento||[];
+            const abDone=abertura.filter((_,i)=>(states.abertura||{})[i]).length;
+            const encDone=encerramento.filter((_,i)=>(states.encerramento||{})[i]).length;
+            const dayTasks=tasks.filter(t=>t.data===ds);
+            const dayLogs=(logs[ds]||[]);
+            const starVal=states._stars||0;
+
+            return(
+              <div key={ds} style={{width:280,flexShrink:0,display:'flex',flexDirection:'column',gap:8}}>
+                {/* Day header */}
+                <div style={{background:isToday?S.az:S.surface,border:`1.5px solid ${isToday?S.az:S.border}`,borderRadius:10,padding:'10px 14px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <div>
+                    <div style={{fontFamily:'Montserrat,sans-serif',fontSize:13,fontWeight:800,color:isToday?'#fff':S.text}}>{DIAS[d.getDay()]+'-feira'}</div>
+                    <div style={{fontSize:10,color:isToday?'rgba(255,255,255,.7)':S.text3,marginTop:1}}>{d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})}</div>
+                  </div>
+                  {isToday&&<span style={{background:'rgba(255,255,255,.2)',color:'#fff',fontSize:9,fontWeight:700,padding:'2px 7px',borderRadius:5}}>HOJE</span>}
+                </div>
+
+                {/* Checklist abertura */}
+                <div style={{background:S.surface,border:`1px solid ${S.border}`,borderRadius:10,overflow:'hidden'}}>
+                  <div style={{padding:'8px 12px',borderBottom:`1px solid ${S.border2}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span style={{fontSize:11,fontWeight:700,color:S.text}}>🌅 Abertura</span>
+                    <span style={{fontSize:10,color:S.text3,fontWeight:600}}>{abDone}/{abertura.length}</span>
+                  </div>
+                  <div style={{padding:'8px 12px'}}>
+                    {abertura.map((item,i)=>(
+                      <div key={i} onClick={()=>onToggleCheck(ds,'abertura',i)} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:i<abertura.length-1?`1px solid ${S.border2}`:'none',cursor:'pointer'}}>
+                        <div style={{width:15,height:15,borderRadius:3,border:`2px solid ${(states.abertura||{})[i]?S.az:S.border}`,background:(states.abertura||{})[i]?S.az:'transparent',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                          {(states.abertura||{})[i]&&<span style={{color:'#fff',fontSize:9,fontWeight:700}}>✓</span>}
+                        </div>
+                        <span style={{fontSize:11,color:(states.abertura||{})[i]?S.text3:S.text,textDecoration:(states.abertura||{})[i]?'line-through':'none',flex:1,lineHeight:1.3}}>{item}</span>
+                      </div>
+                    ))}
+                    {/* Progress */}
+                    <div style={{marginTop:8}}>
+                      <div style={{height:4,background:S.border2,borderRadius:2,overflow:'hidden'}}>
+                        <div style={{height:'100%',width:(abertura.length?Math.round(abDone/abertura.length*100):0)+'%',background:S.az,borderRadius:2}}/>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tarefas do dia */}
+                <div style={{background:S.surface,border:`1px solid ${S.border}`,borderRadius:10,overflow:'hidden'}}>
+                  <div style={{padding:'8px 12px',borderBottom:`1px solid ${S.border2}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span style={{fontSize:11,fontWeight:700,color:S.text}}>📋 Tarefas</span>
+                    <button onClick={()=>onNewTask(ds)} style={{background:'none',border:`1px solid ${S.border}`,borderRadius:5,width:20,height:20,fontSize:12,cursor:'pointer',color:S.text2,display:'flex',alignItems:'center',justifyContent:'center',WebkitAppearance:'none'}}>+</button>
+                  </div>
+                  <div style={{padding:'8px 12px',display:'flex',flexDirection:'column',gap:5}}>
+                    {dayTasks.length===0?
+                      <div style={{fontSize:11,color:S.text3,textAlign:'center',padding:'8px 0'}}>Sem tarefas</div>:
+                      dayTasks.sort((a,b)=>a.hora>b.hora?1:-1).map(t=>{
+                        const prioColor={'Alta':S.red,'Média':S.amber,'Baixa':S.green}[t.prioridade]||S.text3;
+                        return(
+                          <div key={t.id} onClick={()=>onOpenTask(t)} style={{display:'flex',alignItems:'flex-start',gap:6,cursor:'pointer',padding:'4px 0',borderBottom:`1px solid ${S.border2}`}}>
+                            <div style={{width:6,height:6,borderRadius:'50%',background:prioColor,marginTop:4,flexShrink:0}}/>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:11,fontWeight:600,color:t.status==='Concluído'?S.text3:S.text,textDecoration:t.status==='Concluído'?'line-through':'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.titulo}</div>
+                              <div style={{fontSize:9,color:S.text3,display:'flex',gap:4,alignItems:'center',marginTop:1}}>
+                                {t.hora&&<span>{t.hora}</span>}
+                                <Badge status={t.status}/>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    }
+                  </div>
+                </div>
+
+                {/* Registros */}
+                <div style={{background:S.surface,border:`1px solid ${S.border}`,borderRadius:10,overflow:'hidden'}}>
+                  <div style={{padding:'8px 12px',borderBottom:`1px solid ${S.border2}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span style={{fontSize:11,fontWeight:700,color:S.text}}>📝 Registros</span>
+                    <button onClick={()=>setLogDay(ds)} style={{background:'none',border:`1px solid ${S.border}`,borderRadius:5,width:20,height:20,fontSize:12,cursor:'pointer',color:S.text2,display:'flex',alignItems:'center',justifyContent:'center',WebkitAppearance:'none'}}>+</button>
+                  </div>
+                  <div style={{padding:'8px 12px',display:'flex',flexDirection:'column',gap:5}}>
+                    {dayLogs.length===0?
+                      <div style={{fontSize:11,color:S.text3,textAlign:'center',padding:'8px 0'}}>Sem registros</div>:
+                      dayLogs.slice().reverse().map((l,i)=>(
+                        <div key={i} style={{padding:'6px 8px',background:S.surface2,borderRadius:6,borderLeft:`2px solid ${tipoBorder[l.tipo]||S.border}`}}>
+                          <div style={{fontSize:9,fontWeight:700,color:S.text3}}>{tipoLabel[l.tipo]} {l.hora}</div>
+                          <div style={{fontSize:11,color:S.text,lineHeight:1.4,marginTop:2}}>{l.texto.slice(0,80)}{l.texto.length>80?'…':''}</div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+
+                {/* Encerramento */}
+                <div style={{background:S.surface,border:`1px solid ${S.border}`,borderRadius:10,overflow:'hidden'}}>
+                  <div style={{padding:'8px 12px',borderBottom:`1px solid ${S.border2}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span style={{fontSize:11,fontWeight:700,color:S.text}}>🌆 Encerramento</span>
+                    <span style={{fontSize:10,color:S.text3,fontWeight:600}}>{encDone}/{encerramento.length}</span>
+                  </div>
+                  <div style={{padding:'8px 12px'}}>
+                    {encerramento.map((item,i)=>(
+                      <div key={i} onClick={()=>onToggleCheck(ds,'encerramento',i)} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:i<encerramento.length-1?`1px solid ${S.border2}`:'none',cursor:'pointer'}}>
+                        <div style={{width:15,height:15,borderRadius:3,border:`2px solid ${(states.encerramento||{})[i]?S.green:S.border}`,background:(states.encerramento||{})[i]?S.green:'transparent',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                          {(states.encerramento||{})[i]&&<span style={{color:'#fff',fontSize:9,fontWeight:700}}>✓</span>}
+                        </div>
+                        <span style={{fontSize:11,color:(states.encerramento||{})[i]?S.text3:S.text,textDecoration:(states.encerramento||{})[i]?'line-through':'none',flex:1,lineHeight:1.3}}>{item}</span>
+                      </div>
+                    ))}
+                    <div style={{marginTop:8}}>
+                      <div style={{height:4,background:S.border2,borderRadius:2,overflow:'hidden'}}>
+                        <div style={{height:'100%',width:(encerramento.length?Math.round(encDone/encerramento.length*100):0)+'%',background:S.green,borderRadius:2}}/>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Produtividade */}
+                <div style={{background:S.surface,border:`1px solid ${S.border}`,borderRadius:10,padding:'8px 12px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <span style={{fontSize:11,fontWeight:700,color:S.text}}>⭐ Produtividade</span>
+                  <div style={{display:'flex',gap:2}}>
+                    {[1,2,3,4,5].map(i=>(
+                      <button key={i} onClick={()=>onSetStar(ds,i)} style={{fontSize:16,background:'none',border:'none',cursor:'pointer',color:starVal>=i?'#F59E0B':S.border,padding:0,WebkitAppearance:'none'}}>★</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Log Modal */}
+      {logDay&&(
+        <Modal title={`Registrar — ${fmtDate(logDay)}`} onClose={()=>setLogDay(null)}
+          footer={<><Btn ghost onClick={()=>setLogDay(null)}>Cancelar</Btn><Btn onClick={handleSaveLog}>Registrar</Btn></>}>
+          <FormSelect label="Tipo" value={logTipo} onChange={setLogTipo} options={['ocorrencia','decisao','reuniao','ideia','observacao']}/>
+          <FormTextarea label="Descrição" value={logTexto} onChange={setLogTexto} placeholder="Descreva o que aconteceu..." rows={4}/>
+        </Modal>
+      )}
+    </div>
+  );
 }
 
-// ═══════════════════════════════
-// IA
-// ═══════════════════════════════
-const EDGE_FN = "https://syuqwuqkbkqpysugltky.supabase.co/functions/v1/nac-ia";
-
-async function callClaude(userMsg, history=[]){
-  const context = buildContext();
-  const system = `Você é o assistente de gestão do NAC (Núcleo de Atividades Complementares) de um colégio Marista. Fale em português direto, sem formalidade. Seja objetivo e prático. Dados em tempo real do sistema:\n\n${context}`;
-  const messages = [...history, {role:'user', content:userMsg}];
-  const resp = await fetch(EDGE_FN, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + SB_KEY
-    },
-    body: JSON.stringify({ system, messages })
-  });
-  if(!resp.ok) throw new Error('Erro ' + resp.status);
-  const data = await resp.json();
-  return data.content.map(c => c.text||'').join('');
-}
-
-function buildContext(){
+function Semana({tasks,weekOffset,onChangeWeek,onNewTask,onOpenTask}){
+  const dates=getWeekDates(weekOffset);
+  const start=dates[0].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  const end=dates[4].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
   const today=todayStr();
-  const tarefasHoje=TASKS.filter(t=>t.data===today);
-  const atrasadas=TASKS.filter(t=>t.data&&t.data<today&&t.status!=='Concluído');
-  const semana=getWeekDates(0).map(d=>d.toISOString().slice(0,10));
-  const tasksSem=TASKS.filter(t=>semana.includes(t.data));
-  const logsHoje=LOGS[today]||[];
-  const states=(CHECKSTATE[today]||{});
-  const aberturaDone=CHECKS.abertura.filter((_,i)=>states.abertura?.[i]).length;
-  const melAtivas=MELHORIAS.filter(m=>m.status!=='Concluído'&&m.status!=='Descartado');
-  return`DATA: ${fmtDateLong(today)}
-TAREFAS HOJE (${tarefasHoje.length}):
-${tarefasHoje.map(t=>`- [${t.status}] ${t.titulo} | ${t.responsavel} | ${t.prioridade}${t.hora?' | '+t.hora:''}`).join('\n')||'Nenhuma'}
-TAREFAS ATRASADAS (${atrasadas.length}):
-${atrasadas.map(t=>`- [${fmtDate(t.data)}] ${t.titulo} | ${t.responsavel}`).join('\n')||'Nenhuma'}
-SEMANA (${tasksSem.length} tarefas):
-${tasksSem.map(t=>`- [${t.data}][${t.status}] ${t.titulo}`).join('\n')||'Nenhuma'}
-CHECKLIST ABERTURA: ${aberturaDone}/${CHECKS.abertura.length}
-REGISTROS HOJE (${logsHoje.length}):
-${logsHoje.map(l=>`- [${l.tipo}] ${l.texto}`).join('\n')||'Nenhum'}
-MELHORIAS ATIVAS (${melAtivas.length}):
-${melAtivas.slice(0,5).map(m=>`- [${m.prioridade}/${m.status}] ${(m.problema||'').slice(0,80)}`).join('\n')||'Nenhuma'}`;
-}
-function renderIAPanel(){
-  if(!IA_HISTORY.length){addIAMsg('bot','Olá! Sou o assistente do NAC. Estou conectado ao banco de dados em tempo real — vejo todas as tarefas, registros e melhorias. O que precisa?');}
-  else renderIAHistory();
-}
-function renderIAHistory(){
-  const el=document.getElementById('ia-msgs');
-  el.innerHTML=IA_HISTORY.map(m=>`<div class="ai-msg ${m.role==='user'?'user':'bot'}">${escHtml(m.content).replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div>`).join('');
-  el.scrollTop=el.scrollHeight;
-}
-function addIAMsg(role,content){
-  IA_HISTORY.push({role,content});
-  localStorage.setItem('nac_ia_hist',JSON.stringify(IA_HISTORY.slice(-30)));
-  renderIAHistory();
-}
-async function sendIA(){
-  const input=document.getElementById('ia-input');
-  const msg=input.value.trim();if(!msg)return;
-  input.value='';input.style.height='auto';
-  addIAMsg('user',msg);
-  document.getElementById('ia-send').disabled=true;
-  const loading=document.createElement('div');
-  loading.className='ai-msg loading';loading.textContent='Analisando dados do NAC...';
-  document.getElementById('ia-msgs').appendChild(loading);
-  document.getElementById('ia-msgs').scrollTop=document.getElementById('ia-msgs').scrollHeight;
-  try{
-    const hist=IA_HISTORY.slice(-10).map(m=>({role:m.role==='user'?'user':'assistant',content:m.content}));
-    const reply=await callClaude(msg,hist.slice(0,-1));
-    loading.remove();addIAMsg('bot',reply);
-  }catch(e){loading.remove();addIAMsg('bot','Erro ao conectar com a IA.');}
-  document.getElementById('ia-send').disabled=false;
-}
-function iaPrompt(msg){document.getElementById('ia-input').value=msg;sendIA();}
-function iaKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendIA();}}
-function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+  const [filterStatus,setFilterStatus]=useState('');
+  const [filterResp,setFilterResp]=useState('');
 
-// ═══════════════════════════════
-// MODAL
-// ═══════════════════════════════
-function closeModal(id,e){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).style.display='none';}
-
-// ═══════════════════════════════
-// INIT
-// ═══════════════════════════════
-// iOS Global touch fix
-document.addEventListener('touchstart', function(){}, {passive:true});
-
-// Global delegation — catches all dynamic elements
-document.addEventListener('touchend', function(e){
-  const el = e.target.closest('button, [onclick], .nav-item, .task-item, .day-add, .day-task, .check-item, .star, .card-head, .btn-icon, .tab-btn, .forn-card');
-  if(el){
-    e.preventDefault();
-    // Find and fire onclick
-    const onclickAttr = el.getAttribute('onclick');
-    if(onclickAttr){
-      try{ new Function(onclickAttr).call(el); }catch(err){}
-    } else {
-      el.click();
-    }
+  function getWeekDates(offset){
+    const now=new Date(),day=now.getDay(),mon=new Date(now);
+    mon.setDate(now.getDate()-day+1+offset*7);
+    return[0,1,2,3,4].map(i=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
   }
-}, {passive:false});
 
-loadAll();
-setInterval(loadAll, 30000); // auto-refresh a cada 30s
+  let allTasks=tasks.filter(t=>dates.map(d=>d.toISOString().slice(0,10)).includes(t.data));
+  if(filterStatus)allTasks=allTasks.filter(t=>t.status===filterStatus);
+  if(filterResp)allTasks=allTasks.filter(t=>t.responsavel===filterResp);
+  allTasks.sort((a,b)=>a.data===b.data?a.hora>b.hora?1:-1:a.data>b.data?1:-1);
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:14}}>
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+        <div>
+          <div style={{fontFamily:'Montserrat,sans-serif',fontSize:16,fontWeight:800,color:S.text}}>Semana</div>
+          <div style={{fontSize:11,color:S.text3}}>{start} a {end}</div>
+        </div>
+        <Btn sm onClick={()=>onNewTask()}>+ Nova tarefa</Btn>
+      </div>
+
+      <div style={{display:'flex',gap:6,overflowX:'auto',paddingBottom:4}}>
+        <Btn ghost sm onClick={()=>onChangeWeek(-1)}>‹ Anterior</Btn>
+        <Btn ghost sm onClick={()=>onChangeWeek(0)}>Hoje</Btn>
+        <Btn ghost sm onClick={()=>onChangeWeek(1)}>Próxima ›</Btn>
+      </div>
+
+      {/* Day columns — horizontal scroll */}
+      <div style={{display:'flex',gap:10,overflowX:'auto',paddingBottom:4}}>
+        {dates.map(d=>{
+          const ds=d.toISOString().slice(0,10);
+          const isToday=ds===today;
+          const dayTasks=tasks.filter(t=>t.data===ds);
+          return(
+            <div key={ds} style={{minWidth:150,background:S.surface,border:`1px solid ${isToday?S.az:S.border}`,borderRadius:12,flexShrink:0,display:'flex',flexDirection:'column'}}>
+              <div style={{padding:'10px 12px',borderBottom:`1px solid ${S.border2}`,background:isToday?S.azL:'transparent',borderRadius:'12px 12px 0 0',display:'flex',justifyContent:'space-between'}}>
+                <span style={{fontSize:11,fontWeight:700,color:isToday?S.az:S.text2,textTransform:'uppercase'}}>{DIAS[d.getDay()]}</span>
+                <span style={{fontSize:10,color:isToday?S.az:S.text3,fontWeight:isToday?700:400}}>{d.getDate()}/{String(d.getMonth()+1).padStart(2,'0')}</span>
+              </div>
+              <div style={{padding:8,display:'flex',flexDirection:'column',gap:6,flex:1}}>
+                {dayTasks.map(t=>(
+                  <div key={t.id} onClick={()=>onOpenTask(t)} style={{background:S.surface2,border:`1px solid ${S.border2}`,borderRadius:6,padding:'7px 9px',cursor:'pointer'}}>
+                    <div style={{fontSize:12,fontWeight:600,color:t.status==='Concluído'?S.text3:S.text,textDecoration:t.status==='Concluído'?'line-through':'none'}}>{t.titulo}</div>
+                    {t.hora&&<div style={{fontSize:10,color:S.text3,marginTop:2}}>{t.hora}</div>}
+                  </div>
+                ))}
+              </div>
+              <div onClick={()=>onNewTask(ds)} style={{display:'flex',alignItems:'center',gap:6,padding:'8px 10px',color:S.text3,fontSize:11,fontWeight:600,cursor:'pointer',borderTop:`1px solid ${S.border2}`}}>
+                <span>+</span><span>Adicionar</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* List */}
+      <Card>
+        <CardHead title="Lista completa" right={
+          <div style={{display:'flex',gap:6}}>
+            <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} style={{fontSize:11,padding:'4px 8px',border:`1px solid ${S.border}`,borderRadius:6,background:S.surface,color:S.text,WebkitAppearance:'none'}}>
+              <option value="">Todos</option>
+              <option>Não iniciado</option><option>Em andamento</option><option>Aguardando</option><option>Concluído</option>
+            </select>
+            <select value={filterResp} onChange={e=>setFilterResp(e.target.value)} style={{fontSize:11,padding:'4px 8px',border:`1px solid ${S.border}`,borderRadius:6,background:S.surface,color:S.text,WebkitAppearance:'none'}}>
+              <option value="">Todos</option><option>Coordenador</option><option>Assistente</option>
+            </select>
+          </div>
+        }/>
+        <div style={{padding:16,display:'flex',flexDirection:'column',gap:8}}>
+          {allTasks.length===0?<div style={{textAlign:'center',padding:'20px 0',color:S.text3,fontSize:12}}>Sem tarefas nesta semana</div>:
+            allTasks.map(t=><TaskItem key={t.id} task={t} onClick={()=>onOpenTask(t)} showDate/>)}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function IAPanel({tasks,melhorias,checkState,checks,logs}){
+  const [msgs,setMsgs]=useState([{role:'bot',text:'Olá! Sou o assistente do NAC. Estou conectado ao banco em tempo real. O que precisa?'}]);
+  const [input,setInput]=useState('');
+  const [loading,setLoading]=useState(false);
+  const msgsRef=useRef(null);
+
+  useEffect(()=>{if(msgsRef.current)msgsRef.current.scrollTop=msgsRef.current.scrollHeight;},[msgs]);
+
+  function buildContext(){
+    const today=todayStr();
+    const tj=tasks.filter(t=>t.data===today);
+    const at=tasks.filter(t=>t.data&&t.data<today&&t.status!=='Concluído');
+    const lh=logs[today]||[];
+    const cs=(checkState[today]||{});
+    const ad=(checks.abertura||[]).filter((_,i)=>(cs.abertura||{})[i]).length;
+    const ma=melhorias.filter(m=>m.status!=='Concluído'&&m.status!=='Descartado');
+    return`DATA: ${fmtDateLong(today)}
+TAREFAS HOJE (${tj.length}): ${tj.map(t=>`[${t.status}] ${t.titulo} | ${t.responsavel} | ${t.prioridade}`).join(' / ')||'Nenhuma'}
+ATRASADAS (${at.length}): ${at.map(t=>`${fmtDate(t.data)} ${t.titulo}`).join(' / ')||'Nenhuma'}
+CHECKLIST ABERTURA: ${ad}/${(checks.abertura||[]).length}
+LOGS HOJE (${lh.length}): ${lh.map(l=>`[${l.tipo}] ${l.texto}`).join(' / ')||'Nenhum'}
+MELHORIAS ATIVAS (${ma.length}): ${ma.slice(0,4).map(m=>`[${m.prioridade}] ${(m.problema||'').slice(0,50)}`).join(' / ')||'Nenhuma'}`;
+  }
+
+  async function send(msg){
+    if(!msg.trim()||loading)return;
+    const userMsg=msg;
+    setInput('');
+    setMsgs(m=>[...m,{role:'user',text:userMsg}]);
+    setLoading(true);
+    try{
+      const history=msgs.slice(-6).map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}));
+      const system=`Você é o assistente de gestão do NAC de um colégio Marista. Português direto, sem formalidade. Objetivo e prático.\n\n${buildContext()}`;
+      const r=await fetch(EDGE_FN,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({system,messages:[...history,{role:'user',content:userMsg}]})});
+      const d=await r.json();
+      const reply=d.content?.map(c=>c.text||'').join('')||'Erro na resposta.';
+      setMsgs(m=>[...m,{role:'bot',text:reply}]);
+    }catch(e){
+      setMsgs(m=>[...m,{role:'bot',text:'Erro ao conectar com a IA. Tente novamente.'}]);
+    }
+    setLoading(false);
+  }
+
+  const quickActions=[
+    {label:'📊 Briefing do dia',msg:'Faça um briefing completo do meu dia, analisando tarefas, checklists e registros.'},
+    {label:'⚠️ Análise de riscos',msg:'Analise as tarefas da semana e identifique riscos e prioridades.'},
+    {label:'🔴 Tarefas em atraso',msg:'Quais tarefas estão atrasadas? Liste com prioridade de ação.'},
+    {label:'🎯 Foco agora',msg:'Quais são as 3 coisas mais importantes que devo focar agora?'},
+    {label:'💡 Priorizar melhorias',msg:'Analise as melhorias e sugira por onde começar.'},
+    {label:'📝 Resumo da semana',msg:'Resuma a semana: o que foi concluído e o que ficou pendente.'},
+  ];
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:14}}>
+      <div style={{fontFamily:'Montserrat,sans-serif',fontSize:16,fontWeight:800,color:S.text}}>Assistente IA</div>
+
+      <Card style={{display:'flex',flexDirection:'column'}}>
+        <div style={{background:S.az,padding:'12px 14px',display:'flex',alignItems:'center',gap:8,borderRadius:'12px 12px 0 0'}}>
+          <div style={{width:28,height:28,borderRadius:'50%',background:'rgba(255,255,255,.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🤖</div>
+          <div>
+            <div style={{color:'#fff',fontSize:13,fontWeight:700}}>Assistente NAC</div>
+            <div style={{color:'rgba(255,255,255,.55)',fontSize:10}}>Dados em tempo real · Supabase</div>
+          </div>
+        </div>
+        <div ref={msgsRef} style={{padding:14,display:'flex',flexDirection:'column',gap:10,minHeight:280,maxHeight:380,overflowY:'auto'}}>
+          {msgs.map((m,i)=>(
+            <div key={i} style={{maxWidth:'88%',padding:'10px 12px',borderRadius:10,fontSize:13,lineHeight:1.55,alignSelf:m.role==='user'?'flex-end':'flex-start',background:m.role==='user'?S.az:S.azL,color:m.role==='user'?'#fff':S.text}}>
+              {m.text}
+            </div>
+          ))}
+          {loading&&<div style={{alignSelf:'flex-start',background:S.surface2,color:S.text3,padding:'10px 12px',borderRadius:10,fontSize:13,fontStyle:'italic'}}>Analisando...</div>}
+        </div>
+        <div style={{borderTop:`1px solid ${S.border}`,padding:'10px 12px',display:'flex',gap:8,alignItems:'flex-end'}}>
+          <textarea value={input} onChange={e=>setInput(e.target.value)} placeholder="Pergunte sobre o NAC..." rows={1}
+            onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(input);}}}
+            style={{flex:1,border:`1.5px solid ${S.border}`,borderRadius:8,padding:'8px 11px',fontSize:13,color:S.text,background:S.surface,outline:'none',resize:'none',fontFamily:'Inter,sans-serif',lineHeight:1.4}}/>
+          <button onClick={()=>send(input)} disabled={loading} style={{background:S.az,color:'#fff',border:'none',borderRadius:8,width:34,height:34,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,cursor:'pointer',flexShrink:0,opacity:loading?.4:1}}>➤</button>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHead title="⚡ Ações rápidas"/>
+        <div style={{padding:16,display:'flex',flexDirection:'column',gap:8}}>
+          {quickActions.map((a,i)=>(
+            <button key={i} onClick={()=>send(a.msg)} style={{textAlign:'left',padding:'10px 14px',background:S.surface2,border:`1px solid ${S.border}`,borderRadius:8,fontSize:13,color:S.text,cursor:'pointer',fontFamily:'Inter,sans-serif',WebkitAppearance:'none'}}>
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function Melhorias({melhorias,onNew,onOpen}){
+  const [fStatus,setFStatus]=useState('');
+  const [fPrio,setFPrio]=useState('');
+  const prioOrder={'Alta':0,'Média':1,'Baixa':2};
+  let list=melhorias.filter(m=>{if(fStatus&&m.status!==fStatus)return false;if(fPrio&&m.prioridade!==fPrio)return false;return true;});
+  list=[...list].sort((a,b)=>(prioOrder[a.prioridade]||1)-(prioOrder[b.prioridade]||1));
+  const total=melhorias.length,emAnd=melhorias.filter(m=>m.status==='Em execução').length,conc=melhorias.filter(m=>m.status==='Concluído').length,alta=melhorias.filter(m=>m.prioridade==='Alta'&&m.status!=='Concluído').length;
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:14}}>
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:8}}>
+        <div style={{fontFamily:'Montserrat,sans-serif',fontSize:16,fontWeight:800,color:S.text}}>Melhorias</div>
+        <Btn sm onClick={onNew}>+ Nova</Btn>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <KPI n={total} label="Total"/>
+        <KPI n={emAnd} label="Em execução" amber/>
+        <KPI n={conc} label="Concluídas" green/>
+        <KPI n={alta} label="Alta prioridade" red/>
+      </div>
+
+      <div style={{display:'flex',gap:8}}>
+        <select value={fStatus} onChange={e=>setFStatus(e.target.value)} style={{flex:1,fontSize:12,padding:'8px 10px',border:`1px solid ${S.border}`,borderRadius:8,background:S.surface,color:S.text,WebkitAppearance:'none'}}>
+          <option value="">Todos os status</option>
+          <option>Identificado</option><option>Em análise</option><option>Em execução</option><option>Concluído</option><option>Descartado</option>
+        </select>
+        <select value={fPrio} onChange={e=>setFPrio(e.target.value)} style={{flex:1,fontSize:12,padding:'8px 10px',border:`1px solid ${S.border}`,borderRadius:8,background:S.surface,color:S.text,WebkitAppearance:'none'}}>
+          <option value="">Todas prioridades</option>
+          <option>Alta</option><option>Média</option><option>Baixa</option>
+        </select>
+      </div>
+
+      {list.length===0?<Card><div style={{padding:28,textAlign:'center',color:S.text3,fontSize:12}}>Nenhuma melhoria. Clique em + Nova.</div></Card>:
+        list.map(m=>{
+          const prioColor={'Alta':S.red,'Média':S.amber,'Baixa':S.green}[m.prioridade]||S.text3;
+          return(
+            <Card key={m.id} style={{cursor:'pointer'}} >
+              <div onClick={()=>onOpen(m)} style={{padding:'12px 14px'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,flexWrap:'wrap'}}>
+                  <div style={{width:8,height:8,borderRadius:'50%',background:prioColor,flexShrink:0}}/>
+                  <span style={{fontSize:13,fontWeight:700,color:S.text,flex:1}}>{(m.problema||'').slice(0,70)}{(m.problema||'').length>70?'…':''}</span>
+                </div>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap',alignItems:'center'}}>
+                  <Badge status={m.prioridade}/><Badge status={m.status}/>
+                  <span style={{fontSize:10,color:S.text3}}>👤 {m.responsavel}</span>
+                  {m.prazo&&<span style={{fontSize:10,color:S.text3}}>📅 {fmtDate(m.prazo)}</span>}
+                </div>
+                {m.sugestao&&<div style={{fontSize:12,color:S.text2,lineHeight:1.5,marginTop:8,paddingTop:8,borderTop:`1px solid ${S.border2}`}}>💬 {m.sugestao}</div>}
+              </div>
+            </Card>
+          );
+        })
+      }
+    </div>
+  );
+}
+
+// ═══════════════════════════════
+// TASK MODAL
+// ═══════════════════════════════
+function TaskModal({task,defaultDate,onClose,onSave,onDelete}){
+  const [titulo,setTitulo]=useState(task?.titulo||'');
+  const [descricao,setDescricao]=useState(task?.descricao||'');
+  const [data,setData]=useState(task?.data||defaultDate||todayStr());
+  const [hora,setHora]=useState(task?.hora||'');
+  const [responsavel,setResponsavel]=useState(task?.responsavel||'Coordenador');
+  const [prioridade,setPrioridade]=useState(task?.prioridade||'Média');
+  const [status,setStatus]=useState(task?.status||'Não iniciado');
+  const [categoria,setCategoria]=useState(task?.categoria||'');
+  const [obs,setObs]=useState(task?.observacoes||'');
+
+  function handleSave(){
+    if(!titulo.trim())return;
+    onSave({id:task?.id||uid(),titulo,descricao,data,hora,responsavel,prioridade,status,categoria,observacoes:obs});
+  }
+
+  return(
+    <Modal title={task?'Editar Tarefa':'Nova Tarefa'} onClose={onClose}
+      footer={<>
+        <Btn ghost onClick={onClose}>Cancelar</Btn>
+        {task&&<Btn onClick={()=>onDelete(task.id)} style={{background:S.redL,color:S.red}}>Excluir</Btn>}
+        <Btn onClick={handleSave}>Salvar</Btn>
+      </>}>
+      <FormInput label="Título" value={titulo} onChange={setTitulo} placeholder="O que precisa ser feito?"/>
+      <FormTextarea label="Descrição" value={descricao} onChange={setDescricao} placeholder="Detalhes..."/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <FormInput label="Data" value={data} onChange={setData} type="date"/>
+        <FormInput label="Horário" value={hora} onChange={setHora} type="time"/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <FormSelect label="Responsável" value={responsavel} onChange={setResponsavel} options={['Coordenador','Assistente','Ambos']}/>
+        <FormSelect label="Prioridade" value={prioridade} onChange={setPrioridade} options={['Alta','Média','Baixa']}/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <FormSelect label="Status" value={status} onChange={setStatus} options={['Não iniciado','Em andamento','Aguardando','Concluído']}/>
+        <FormInput label="Categoria" value={categoria} onChange={setCategoria} placeholder="Ex: Administrativo"/>
+      </div>
+      <FormTextarea label="Observações" value={obs} onChange={setObs} rows={2}/>
+    </Modal>
+  );
+}
+
+// ═══════════════════════════════
+// MELHORIA MODAL
+// ═══════════════════════════════
+function MelhoriaModal({mel,onClose,onSave,onDelete}){
+  const [problema,setProblema]=useState(mel?.problema||'');
+  const [sugestao,setSugestao]=useState(mel?.sugestao||'');
+  const [prioridade,setPrioridade]=useState(mel?.prioridade||'Média');
+  const [impacto,setImpacto]=useState(mel?.impacto||'Médio');
+  const [responsavel,setResponsavel]=useState(mel?.responsavel||'Coordenador');
+  const [prazo,setPrazo]=useState(mel?.prazo||'');
+  const [status,setStatus]=useState(mel?.status||'Identificado');
+
+  function handleSave(){
+    if(!problema.trim())return;
+    onSave({id:mel?.id||uid(),problema,sugestao,prioridade,impacto,responsavel,prazo,status});
+  }
+
+  return(
+    <Modal title={mel?'Editar Melhoria':'Nova Melhoria'} onClose={onClose}
+      footer={<>
+        <Btn ghost onClick={onClose}>Cancelar</Btn>
+        {mel&&<Btn onClick={()=>onDelete(mel.id)} style={{background:S.redL,color:S.red}}>Excluir</Btn>}
+        <Btn onClick={handleSave}>Salvar</Btn>
+      </>}>
+      <FormTextarea label="Problema identificado" value={problema} onChange={setProblema} placeholder="Qual é o problema?"/>
+      <FormTextarea label="Sugestão" value={sugestao} onChange={setSugestao} placeholder="O que pode ser feito?"/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <FormSelect label="Prioridade" value={prioridade} onChange={setPrioridade} options={['Alta','Média','Baixa']}/>
+        <FormSelect label="Impacto" value={impacto} onChange={setImpacto} options={['Alto','Médio','Baixo']}/>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        <FormSelect label="Responsável" value={responsavel} onChange={setResponsavel} options={['Coordenador','Assistente','Equipe']}/>
+        <FormInput label="Prazo" value={prazo} onChange={setPrazo} type="date"/>
+      </div>
+      <FormSelect label="Status" value={status} onChange={setStatus} options={['Identificado','Em análise','Em execução','Concluído','Descartado']}/>
+    </Modal>
+  );
+}
+
+// ═══════════════════════════════
+// MAIN APP
+// ═══════════════════════════════
+function App(){
+  const [tab,setTab]=useState('dashboard');
+  const [sideOpen,setSideOpen]=useState(false);
+  const [tasks,setTasks]=useState([]);
+  const [melhorias,setMelhorias]=useState([]);
+  const [checkState,setCheckState]=useState({});
+  const [logs,setLogs]=useState({});
+  const [checks]=useState(()=>JSON.parse(localStorage.getItem('nac_checks')||JSON.stringify(CHECKS_DEFAULT)));
+  const [syncing,setSyncing]=useState(false);
+  const [syncOk,setSyncOk]=useState(true);
+  const [toast,setToast]=useState({msg:'',type:''});
+  const [taskModal,setTaskModal]=useState(null); // {task?:Task, date?:string}
+  const [melModal,setMelModal]=useState(null);
+  const [weekOffset,setWeekOffset]=useState(0);
+  const [rotinaDay,setRotinaDay]=useState(todayStr());
+  const [briefing,setBriefing]=useState('');
+  const [briefingLoading,setBriefingLoading]=useState(false);
+
+  function showToast(msg,type=''){setToast({msg,type});setTimeout(()=>setToast({msg:'',type:''}),2500);}
+
+  async function loadAll(){
+    setSyncing(true);
+    try{
+      const[t,m,cs,l]=await Promise.all([
+        sb.get('tarefas','order=criado_em.desc'),
+        sb.get('melhorias','order=criado_em.desc'),
+        sb.get('checklist_state'),
+        sb.get('logs','order=criado_em.desc')
+      ]);
+      setTasks(t||[]);
+      setMelhorias(m||[]);
+      const cs2={};
+      (cs||[]).forEach(r=>{
+        if(!cs2[r.data])cs2[r.data]={};
+        if(!cs2[r.data][r.secao])cs2[r.data][r.secao]={};
+        if(r.secao==='stars')cs2[r.data]._stars=r.concluido?5:0;
+        else cs2[r.data][r.secao][r.indice]=r.concluido;
+      });
+      setCheckState(cs2);
+      const l2={};
+      (l||[]).forEach(r=>{if(!l2[r.data])l2[r.data]=[];l2[r.data].push(r);});
+      setLogs(l2);
+      setSyncOk(true);
+    }catch(e){setSyncOk(false);}
+    setSyncing(false);
+  }
+
+  useEffect(()=>{loadAll();const id=setInterval(loadAll,30000);return()=>clearInterval(id);},[]);
+
+  // Task ops
+  async function saveTask(item){
+    try{
+      if(tasks.find(t=>t.id===item.id)){
+        await sb.patch('tarefas',item.id,item);
+        setTasks(ts=>ts.map(t=>t.id===item.id?{...t,...item}:t));
+      } else {
+        await sb.post('tarefas',item);
+        setTasks(ts=>[item,...ts]);
+      }
+      setTaskModal(null);showToast('Tarefa salva!','success');
+    }catch(e){showToast('Erro ao salvar','error');}
+  }
+  async function deleteTask(id){
+    try{await sb.delete('tarefas',id);setTasks(ts=>ts.filter(t=>t.id!==id));setTaskModal(null);showToast('Excluída.');}
+    catch(e){showToast('Erro ao excluir','error');}
+  }
+
+  // Melhoria ops
+  async function saveMelhoria(item){
+    try{
+      if(melhorias.find(m=>m.id===item.id)){
+        await sb.patch('melhorias',item.id,item);
+        setMelhorias(ms=>ms.map(m=>m.id===item.id?{...m,...item}:m));
+      } else {
+        await sb.post('melhorias',item);
+        setMelhorias(ms=>[item,...ms]);
+      }
+      setMelModal(null);showToast('Melhoria salva!','success');
+    }catch(e){showToast('Erro ao salvar','error');}
+  }
+  async function deleteMelhoria(id){
+    try{await sb.delete('melhorias',id);setMelhorias(ms=>ms.filter(m=>m.id!==id));setMelModal(null);showToast('Excluída.');}
+    catch(e){showToast('Erro ao excluir','error');}
+  }
+
+  // Check ops
+  async function toggleCheck(day,section,idx){
+    const newVal=!(((checkState[day]||{})[section]||{})[idx]);
+    setCheckState(cs=>({...cs,[day]:{...(cs[day]||{}),[section]:{...((cs[day]||{})[section]||{}),[idx]:newVal}}}));
+    try{await sb.upsert('checklist_state',{id:`${day}_${section}_${idx}`,data:day,secao:section,indice:idx,concluido:newVal});}
+    catch(e){}
+  }
+  async function setStars(day,n){
+    setCheckState(cs=>({...cs,[day]:{...(cs[day]||{}),_stars:n}}));
+    try{await sb.upsert('checklist_state',{id:`${day}_stars_0`,data:day,secao:'stars',indice:0,concluido:n>3});}
+    catch(e){}
+    showToast(`Produtividade: ${n}/5 ⭐`,'success');
+  }
+
+  function addCheck(section){
+    const text=prompt('Nome do item:');if(!text?.trim())return;
+    const updated={...checks,[section]:[...(checks[section]||[]),text.trim()]};
+    localStorage.setItem('nac_checks',JSON.stringify(updated));
+    showToast('Item adicionado!','success');
+  }
+
+  // Log ops
+  async function saveLog(day,{tipo,texto}){
+    const hora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const item={id:uid(),data:day,tipo,texto,hora};
+    try{
+      await sb.post('logs',item);
+      setLogs(l=>({...l,[day]:[...(l[day]||[]),item]}));
+      showToast('Registrado!','success');
+    }catch(e){showToast('Erro ao registrar','error');}
+  }
+
+  // Briefing
+  async function handleBriefing(clear=false){
+    if(clear){setBriefing('');return;}
+    setBriefingLoading(true);setBriefing('');
+    const today=todayStr();
+    const tj=tasks.filter(t=>t.data===today);
+    const at=tasks.filter(t=>t.data&&t.data<today&&t.status!=='Concluído');
+    const ma=melhorias.filter(m=>m.status!=='Concluído');
+    const context=`DATA: ${fmtDateLong(today)}\nTAREFAS HOJE: ${tj.map(t=>`[${t.status}] ${t.titulo}`).join(', ')||'Nenhuma'}\nATRASADAS: ${at.length}\nMELHORIAS ATIVAS: ${ma.length}`;
+    try{
+      const r=await fetch(EDGE_FN,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY},body:JSON.stringify({system:`Você é o assistente do NAC. Dados: ${context}`,messages:[{role:'user',content:'Faça um briefing direto do meu dia com prioridades, riscos e recomendações. Use bullets. Máximo 200 palavras.'}]})});
+      const d=await r.json();
+      setBriefing(d.content?.map(c=>c.text||'').join('')||'Erro ao gerar briefing.');
+    }catch(e){setBriefing('Erro ao conectar com a IA.');}
+    setBriefingLoading(false);
+  }
+
+  const navItems=[
+    {id:'dashboard',icon:'📊',label:'Dashboard'},
+    {id:'rotina',icon:'☀️',label:'Rotina'},
+    {id:'semana',icon:'📅',label:'Semana'},
+    {id:'ia',icon:'🤖',label:'IA'},
+    {id:'melhorias',icon:'💡',label:'Melhorias'},
+  ];
+
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})+' · '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',height:'100%',background:S.bg}}>
+      {/* TOPBAR */}
+      <div style={{background:S.surface,borderBottom:`1px solid ${S.border}`,padding:'0 16px',height:52,display:'flex',alignItems:'center',gap:12,position:'sticky',top:0,zIndex:50,flexShrink:0}}>
+        <button onClick={()=>setSideOpen(true)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:S.text2,padding:4,display:'flex',alignItems:'center',WebkitAppearance:'none'}}>☰</button>
+        <span style={{fontFamily:'Montserrat,sans-serif',fontSize:15,fontWeight:800,color:S.az}}>NAC</span>
+        <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:8}}>
+          <div style={{width:8,height:8,borderRadius:'50%',background:syncOk?S.green:S.red,flexShrink:0}}/>
+          <span style={{fontSize:11,color:S.text3}}>{dateStr}</span>
+        </div>
+      </div>
+
+      {/* SIDEBAR */}
+      {sideOpen&&(
+        <div style={{position:'fixed',inset:0,zIndex:100,display:'flex'}}>
+          <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.4)'}} onClick={()=>setSideOpen(false)}/>
+          <div style={{position:'relative',width:220,background:S.az,height:'100%',display:'flex',flexDirection:'column',zIndex:1}}>
+            <div style={{padding:'18px 16px 12px',borderBottom:'1px solid rgba(255,255,255,.1)'}}>
+              <div style={{fontFamily:'Montserrat,sans-serif',fontSize:18,fontWeight:800,color:'#fff'}}>NAC</div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,.45)',fontWeight:500,textTransform:'uppercase',letterSpacing:.8,marginTop:1}}>Centro de Comando</div>
+            </div>
+            <nav style={{flex:1,padding:'10px 8px',overflowY:'auto'}}>
+              {navItems.map(item=>(
+                <button key={item.id} onClick={()=>{setTab(item.id);setSideOpen(false);}} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 10px',borderRadius:8,color:tab===item.id?'#fff':'rgba(255,255,255,.65)',fontSize:13,fontWeight:tab===item.id?600:500,cursor:'pointer',border:'none',background:tab===item.id?'rgba(255,255,255,.15)':'transparent',width:'100%',textAlign:'left',marginBottom:2,WebkitAppearance:'none'}}>
+                  <span style={{fontSize:16,width:20,textAlign:'center'}}>{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+            <div style={{padding:'12px 8px',borderTop:'1px solid rgba(255,255,255,.1)'}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px'}}>
+                <div style={{width:30,height:30,borderRadius:'50%',background:'rgba(255,255,255,.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,color:'#fff',flexShrink:0}}>N</div>
+                <div>
+                  <div style={{fontSize:12,color:'rgba(255,255,255,.7)',fontWeight:500}}>NAC · Marista</div>
+                  <div style={{fontSize:9,color:'rgba(255,255,255,.4)'}}>{syncing?'Sincronizando...':syncOk?'Sincronizado':'Erro de conexão'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONTENT */}
+      <div style={{flex:1,overflowY:'auto',padding:16}}>
+        {tab==='dashboard'&&<Dashboard tasks={tasks} melhorias={melhorias} checkState={checkState} checks={checks} onToggleCheck={(s,i)=>toggleCheck(todayStr(),s,i)} onNewTask={date=>setTaskModal({task:null,date})} onOpenTask={t=>setTaskModal({task:t,date:t.data})} onBriefing={handleBriefing} briefing={briefing} briefingLoading={briefingLoading}/>}
+        {tab==='rotina'&&<RotinaWeekView tasks={tasks} checkState={checkState} checks={checks} logs={logs} onToggleCheck={toggleCheck} onNewTask={date=>setTaskModal({task:null,date})} onOpenTask={t=>setTaskModal({task:t,date:t.data})} onSaveLog={saveLog} onSetStar={setStars} weekOffset={weekOffset} onChangeWeek={d=>setWeekOffset(d===0?0:weekOffset+d)}/>}
+        {tab==='semana'&&<Semana tasks={tasks} weekOffset={weekOffset} onChangeWeek={d=>setWeekOffset(d===0?0:weekOffset+d)} onNewTask={date=>setTaskModal({task:null,date})} onOpenTask={t=>setTaskModal({task:t,date:t.data})}/>}
+        {tab==='ia'&&<IAPanel tasks={tasks} melhorias={melhorias} checkState={checkState} checks={checks} logs={logs}/>}
+        {tab==='melhorias'&&<Melhorias melhorias={melhorias} onNew={()=>setMelModal({mel:null})} onOpen={m=>setMelModal({mel:m})}/>}
+      </div>
+
+      {/* BOTTOM NAV */}
+      <div style={{background:S.surface,borderTop:`1px solid ${S.border}`,display:'flex',flexShrink:0,position:'sticky',bottom:0,zIndex:50}}>
+        {navItems.map(item=>(
+          <button key={item.id} onClick={()=>setTab(item.id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'8px 4px',background:'none',border:'none',cursor:'pointer',WebkitAppearance:'none'}}>
+            <span style={{fontSize:18}}>{item.icon}</span>
+            <span style={{fontSize:9,fontWeight:600,color:tab===item.id?S.az:S.text3,marginTop:2,textTransform:'uppercase',letterSpacing:.3}}>{item.label}</span>
+            {tab===item.id&&<div style={{width:20,height:2,background:S.az,borderRadius:2,marginTop:2}}/>}
+          </button>
+        ))}
+      </div>
+
+      {/* MODALS */}
+      {taskModal&&<TaskModal task={taskModal.task} defaultDate={taskModal.date} onClose={()=>setTaskModal(null)} onSave={saveTask} onDelete={deleteTask}/>}
+      {melModal&&<MelhoriaModal mel={melModal.mel} onClose={()=>setMelModal(null)} onSave={saveMelhoria} onDelete={deleteMelhoria}/>}
+
+      {/* TOAST */}
+      <Toast msg={toast.msg} type={toast.type} onHide={()=>setToast({msg:'',type:''})}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
