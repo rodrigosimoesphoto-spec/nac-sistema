@@ -154,6 +154,11 @@ input,select,textarea{font-family:'Inter',sans-serif;-webkit-appearance:none;app
 
 /* EMPTY */
 .empty{text-align:center;padding:24px 16px;color:#9CA3AF;font-size:12px}
+
+/* PERSISTENT MODAL — never rebuilt by render() */
+#persistent-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:flex-end;justify-content:center}
+#persistent-modal.open{display:flex}
+#persistent-modal .modal{max-height:92vh}
 </style>
 </head>
 <body>
@@ -962,5 +967,260 @@ setInterval(()=>{
   if(el){const now=new Date();el.textContent=now.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})+' · '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
 },60000);
 </script>
+
+<!-- PERSISTENT MODAL - never touched by render() -->
+<div id="persistent-modal" onclick="if(event.target===this)PM.close()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head" id="pm-head">
+      <span class="modal-title" id="pm-title">Novo</span>
+      <button class="modal-close" onclick="PM.close()">×</button>
+    </div>
+    <div class="modal-body" id="pm-body"></div>
+    <div class="modal-footer" id="pm-footer"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+// PERSISTENT MODAL MANAGER
+// Never rebuilt — only content inside changes
+// ═══════════════════════════════
+const PM = {
+  el: null,
+  type: null,
+  data: null,
+
+  init(){
+    this.el = document.getElementById('persistent-modal');
+  },
+
+  open(type, data){
+    this.type = type;
+    this.data = data;
+    this.el = this.el || document.getElementById('persistent-modal');
+    this._render();
+    this.el.classList.add('open');
+    // Focus first input
+    setTimeout(()=>{
+      const first = this.el.querySelector('input,textarea,select');
+      if(first) first.focus();
+    }, 100);
+  },
+
+  close(){
+    this.el = this.el || document.getElementById('persistent-modal');
+    this.el.classList.remove('open');
+    this.type = null;
+    this.data = null;
+    state.modal = null;
+    // Re-render page to update any lists
+    render();
+  },
+
+  _render(){
+    const head = document.getElementById('pm-head').querySelector('.modal-title');
+    const body = document.getElementById('pm-body');
+    const footer = document.getElementById('pm-footer');
+
+    if(this.type === 'task'){
+      const t = this.data.task || {};
+      head.textContent = t.id ? 'Editar Tarefa' : 'Nova Tarefa';
+      body.innerHTML = `
+        <div class="form-group"><label class="form-label">Título</label><input class="form-input" id="pm-titulo" value="${esc(t.titulo||'')}" placeholder="O que precisa ser feito?"></div>
+        <div class="form-group"><label class="form-label">Descrição</label><textarea class="form-textarea" id="pm-desc" rows="2">${esc(t.descricao||'')}</textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Data</label><input class="form-input" type="date" id="pm-data" value="${t.data||this.data.date||todayStr()}"></div>
+          <div class="form-group"><label class="form-label">Horário</label><input class="form-input" type="time" id="pm-hora" value="${t.hora||''}"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Responsável</label>
+            <select class="form-select" id="pm-resp">
+              <option${(!t.responsavel||t.responsavel==='Coordenador')?' selected':''}>Coordenador</option>
+              <option${t.responsavel==='Assistente'?' selected':''}>Assistente</option>
+              <option${t.responsavel==='Ambos'?' selected':''}>Ambos</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Prioridade</label>
+            <select class="form-select" id="pm-prio">
+              <option${t.prioridade==='Alta'?' selected':''}>Alta</option>
+              <option${(!t.prioridade||t.prioridade==='Média')?' selected':''}>Média</option>
+              <option${t.prioridade==='Baixa'?' selected':''}>Baixa</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Status</label>
+            <select class="form-select" id="pm-status">
+              <option${(!t.status||t.status==='Não iniciado')?' selected':''}>Não iniciado</option>
+              <option${t.status==='Em andamento'?' selected':''}>Em andamento</option>
+              <option${t.status==='Aguardando'?' selected':''}>Aguardando</option>
+              <option${t.status==='Concluído'?' selected':''}>Concluído</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Categoria</label><input class="form-input" id="pm-cat" value="${esc(t.categoria||'')}" placeholder="Ex: Administrativo"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Observações</label><textarea class="form-textarea" id="pm-obs" rows="2">${esc(t.observacoes||'')}</textarea></div>`;
+      footer.innerHTML = `
+        <button class="btn ghost" onclick="PM.close()">Cancelar</button>
+        ${t.id?`<button class="btn red" onclick="PM._deleteTask('${t.id}')">Excluir</button>`:''}
+        <button class="btn" onclick="PM._submitTask()">Salvar</button>`;
+    }
+
+    else if(this.type === 'mel'){
+      const m = this.data.mel || {};
+      head.textContent = m.id ? 'Editar Melhoria' : 'Nova Melhoria';
+      body.innerHTML = `
+        <div class="form-group"><label class="form-label">Problema identificado</label><textarea class="form-textarea" id="pm-prob" rows="3">${esc(m.problema||'')}</textarea></div>
+        <div class="form-group"><label class="form-label">Sugestão</label><textarea class="form-textarea" id="pm-sug" rows="3">${esc(m.sugestao||'')}</textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Prioridade</label>
+            <select class="form-select" id="pm-prio">
+              <option${m.prioridade==='Alta'?' selected':''}>Alta</option>
+              <option${(!m.prioridade||m.prioridade==='Média')?' selected':''}>Média</option>
+              <option${m.prioridade==='Baixa'?' selected':''}>Baixa</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Impacto</label>
+            <select class="form-select" id="pm-imp">
+              <option${m.impacto==='Alto'?' selected':''}>Alto</option>
+              <option${(!m.impacto||m.impacto==='Médio')?' selected':''}>Médio</option>
+              <option${m.impacto==='Baixo'?' selected':''}>Baixo</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Responsável</label>
+            <select class="form-select" id="pm-resp">
+              <option${(!m.responsavel||m.responsavel==='Coordenador')?' selected':''}>Coordenador</option>
+              <option${m.responsavel==='Assistente'?' selected':''}>Assistente</option>
+              <option${m.responsavel==='Equipe'?' selected':''}>Equipe</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Prazo</label><input class="form-input" type="date" id="pm-prazo" value="${m.prazo||''}"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="pm-status">
+            <option${(!m.status||m.status==='Identificado')?' selected':''}>Identificado</option>
+            <option${m.status==='Em análise'?' selected':''}>Em análise</option>
+            <option${m.status==='Em execução'?' selected':''}>Em execução</option>
+            <option${m.status==='Concluído'?' selected':''}>Concluído</option>
+            <option${m.status==='Descartado'?' selected':''}>Descartado</option>
+          </select>
+        </div>`;
+      footer.innerHTML = `
+        <button class="btn ghost" onclick="PM.close()">Cancelar</button>
+        ${m.id?`<button class="btn red" onclick="PM._deleteMel('${m.id}')">Excluir</button>`:''}
+        <button class="btn" onclick="PM._submitMel()">Salvar</button>`;
+    }
+
+    else if(this.type === 'log'){
+      const day = this.data.day;
+      head.textContent = `Registrar — ${fmtDate(day)}`;
+      body.innerHTML = `
+        <div class="form-group"><label class="form-label">Tipo</label>
+          <select class="form-select" id="pm-log-tipo">
+            <option value="ocorrencia">🔴 Ocorrência</option>
+            <option value="decisao">🔵 Decisão</option>
+            <option value="reuniao">🟢 Reunião</option>
+            <option value="ideia">🟣 Ideia</option>
+            <option value="observacao">🟡 Observação</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Descrição</label><textarea class="form-textarea" id="pm-log-texto" rows="4" placeholder="Descreva o que aconteceu..."></textarea></div>`;
+      footer.innerHTML = `
+        <button class="btn ghost" onclick="PM.close()">Cancelar</button>
+        <button class="btn" onclick="PM._submitLog('${day}')">Registrar</button>`;
+    }
+  },
+
+  _g(id){ return document.getElementById(id)?.value||''; },
+
+  async _submitTask(){
+    const titulo = this._g('pm-titulo');
+    if(!titulo.trim()){ showToast('Informe o título','error'); return; }
+    const id = this.data?.task?.id;
+    const item = {
+      id: id||uid(),
+      titulo,
+      descricao: this._g('pm-desc'),
+      data: this._g('pm-data')||todayStr(),
+      hora: this._g('pm-hora'),
+      responsavel: this._g('pm-resp')||'Coordenador',
+      prioridade: this._g('pm-prio')||'Média',
+      status: this._g('pm-status')||'Não iniciado',
+      categoria: this._g('pm-cat'),
+      observacoes: this._g('pm-obs')
+    };
+    try{
+      if(id){ await sb.patch('tarefas',id,item); state.tasks=state.tasks.map(t=>t.id===id?{...t,...item}:t); }
+      else { await sb.post('tarefas',item); state.tasks=[item,...state.tasks]; }
+      this.close();
+      showToast('Tarefa salva!','success');
+    }catch(e){ showToast('Erro ao salvar','error'); }
+  },
+
+  async _deleteTask(id){
+    if(!confirm('Excluir esta tarefa?'))return;
+    try{
+      await sb.del('tarefas',id);
+      state.tasks=state.tasks.filter(t=>t.id!==id);
+      this.close();
+      showToast('Excluída.');
+    }catch(e){ showToast('Erro ao excluir','error'); }
+  },
+
+  async _submitMel(){
+    const problema = this._g('pm-prob');
+    if(!problema.trim()){ showToast('Descreva o problema','error'); return; }
+    const id = this.data?.mel?.id;
+    const item = {
+      id: id||uid(),
+      problema,
+      sugestao: this._g('pm-sug'),
+      prioridade: this._g('pm-prio')||'Média',
+      impacto: this._g('pm-imp')||'Médio',
+      responsavel: this._g('pm-resp')||'Coordenador',
+      prazo: this._g('pm-prazo'),
+      status: this._g('pm-status')||'Identificado'
+    };
+    try{
+      if(id){ await sb.patch('melhorias',id,item); state.melhorias=state.melhorias.map(m=>m.id===id?{...m,...item}:m); }
+      else { await sb.post('melhorias',item); state.melhorias=[item,...state.melhorias]; }
+      this.close();
+      showToast('Melhoria salva!','success');
+    }catch(e){ showToast('Erro ao salvar','error'); }
+  },
+
+  async _deleteMel(id){
+    if(!confirm('Excluir esta melhoria?'))return;
+    try{
+      await sb.del('melhorias',id);
+      state.melhorias=state.melhorias.filter(m=>m.id!==id);
+      this.close();
+      showToast('Excluída.');
+    }catch(e){ showToast('Erro ao excluir','error'); }
+  },
+
+  async _submitLog(day){
+    const tipo = this._g('pm-log-tipo')||'ocorrencia';
+    const texto = this._g('pm-log-texto');
+    if(!texto.trim()){ showToast('Descreva o registro','error'); return; }
+    await saveLog(day, tipo, texto);
+    this.close();
+  }
+};
+
+// Override open functions to use PM
+function openTask(id){ PM.open('task',{task:state.tasks.find(t=>t.id===id)}); }
+function openNewTask(date){ PM.open('task',{task:null,date:date||todayStr()}); }
+function openMel(id){ PM.open('mel',{mel:state.melhorias.find(m=>m.id===id)}); }
+function openNewMel(){ PM.open('mel',{mel:null}); }
+function openLogModal(day){ PM.open('log',{day}); }
+
+// Init PM after DOM ready
+document.addEventListener('DOMContentLoaded', ()=>PM.init());
+setTimeout(()=>PM.init(), 100);
+</script>
+
 </body>
 </html>
