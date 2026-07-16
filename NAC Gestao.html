@@ -215,20 +215,11 @@ let state={
   iaInput:'',
 };
 
-function setState(patch,skipRender=false){
-  const prev=state.modal;
+function setState(patch){
   Object.assign(state,typeof patch==='function'?patch(state):patch);
-  if(skipRender)return;
-  // If modal is open and we're only updating non-modal fields, don't rebuild the whole page
-  if(state.modal && prev===state.modal){
-    // Only update modal container
-    const modalEl=document.getElementById('modal-container');
-    if(modalEl)modalEl.innerHTML=modalHTML();
-    // Update toast
-    const toastEl=document.getElementById('toast-container');
-    if(toastEl)toastEl.innerHTML=state.toast.msg?`<div class="toast" style="background:${state.toast.type==='success'?'#1A7A4A':state.toast.type==='error'?'#D62828':'#002B7F'};color:#fff">${esc(state.toast.msg)}</div>`:'';
-    return;
-  }
+  // NEVER render() when PM modal is open — it would destroy input fields
+  const pmOpen = document.getElementById('persistent-modal')?.classList.contains('open');
+  if(pmOpen) return;
   render();
 }
 
@@ -281,8 +272,11 @@ async function loadAll(){
     });
     const l2={};
     (l||[]).forEach(r=>{if(!l2[r.data])l2[r.data]=[];l2[r.data].push(r);});
-    setState({tasks:t||[],melhorias:m||[],checkState:cs2,logs:l2,syncing:false,syncOk:true});
-  }catch(e){setState({syncing:false,syncOk:false});}
+    state.tasks=t||[];state.melhorias=m||[];state.checkState=cs2;state.logs=l2;state.syncing=false;state.syncOk=true;
+    // Only re-render if modal is NOT open
+    const pmOpen=document.getElementById('persistent-modal')?.classList.contains('open');
+    if(!pmOpen) render();
+  }catch(e){state.syncing=false;state.syncOk=false;}
 }
 
 async function saveTask(item){
@@ -334,8 +328,9 @@ async function toggleCheck(day,section,idx){
   if(!cs[day])cs[day]={};
   if(!cs[day][section])cs[day][section]={};
   cs[day][section]={...cs[day][section],[idx]:newVal};
-  state.checkState=cs; // Update state directly without triggering modal re-render
-  render();
+  state.checkState=cs;
+  const pmOpen=document.getElementById('persistent-modal')?.classList.contains('open');
+  if(!pmOpen) render();
   try{await sb.upsert('checklist_state',{id:`${day}_${section}_${idx}`,data:day,secao:section,indice:idx,concluido:newVal});}catch(e){}
 }
 
