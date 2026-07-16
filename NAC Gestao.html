@@ -215,11 +215,13 @@ let state={
   iaInput:'',
 };
 
+function isModalOpen(){
+  return document.getElementById('persistent-modal')?.classList.contains('open') || false;
+}
+
 function setState(patch){
   Object.assign(state,typeof patch==='function'?patch(state):patch);
-  // NEVER render() when PM modal is open — it would destroy input fields
-  const pmOpen = document.getElementById('persistent-modal')?.classList.contains('open');
-  if(pmOpen) return;
+  if(isModalOpen()) return;
   render();
 }
 
@@ -273,9 +275,7 @@ async function loadAll(){
     const l2={};
     (l||[]).forEach(r=>{if(!l2[r.data])l2[r.data]=[];l2[r.data].push(r);});
     state.tasks=t||[];state.melhorias=m||[];state.checkState=cs2;state.logs=l2;state.syncing=false;state.syncOk=true;
-    // Only re-render if modal is NOT open
-    const pmOpen=document.getElementById('persistent-modal')?.classList.contains('open');
-    if(!pmOpen) render();
+    if(!isModalOpen()) render();
   }catch(e){state.syncing=false;state.syncOk=false;}
 }
 
@@ -329,8 +329,7 @@ async function toggleCheck(day,section,idx){
   if(!cs[day][section])cs[day][section]={};
   cs[day][section]={...cs[day][section],[idx]:newVal};
   state.checkState=cs;
-  const pmOpen=document.getElementById('persistent-modal')?.classList.contains('open');
-  if(!pmOpen) render();
+  if(!isModalOpen()) render();
   try{await sb.upsert('checklist_state',{id:`${day}_${section}_${idx}`,data:day,secao:section,indice:idx,concluido:newVal});}catch(e){}
 }
 
@@ -350,7 +349,7 @@ async function saveLog(day,tipo,texto){
     await sb.post('logs',item);
     const l={...state.logs};
     l[day]=[...(l[day]||[]),item];
-    setState({logs:l,modal:null});
+    state.logs=l;
     showToast('Registrado!','success');
   }catch(e){showToast('Erro ao registrar','error');}
 }
@@ -955,9 +954,14 @@ function showToast(msg,type=''){
 
 render();
 loadAll();
-setInterval(loadAll,30000);
 setInterval(()=>{
-  // Update clock every minute without full reload
+  // Only auto-refresh if modal is closed
+  const pmOpen=document.getElementById('persistent-modal')?.classList.contains('open');
+  if(!pmOpen) loadAll();
+}, 30000);
+setInterval(()=>{
+  const pmOpen=document.getElementById('persistent-modal')?.classList.contains('open');
+  if(pmOpen) return;
   const el=document.querySelector('.topbar span:last-child');
   if(el){const now=new Date();el.textContent=now.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})+' · '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
 },60000);
