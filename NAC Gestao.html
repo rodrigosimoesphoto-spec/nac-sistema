@@ -210,8 +210,20 @@ let state={
   iaInput:'',
 };
 
-function setState(patch){
+function setState(patch,skipRender=false){
+  const prev=state.modal;
   Object.assign(state,typeof patch==='function'?patch(state):patch);
+  if(skipRender)return;
+  // If modal is open and we're only updating non-modal fields, don't rebuild the whole page
+  if(state.modal && prev===state.modal){
+    // Only update modal container
+    const modalEl=document.getElementById('modal-container');
+    if(modalEl)modalEl.innerHTML=modalHTML();
+    // Update toast
+    const toastEl=document.getElementById('toast-container');
+    if(toastEl)toastEl.innerHTML=state.toast.msg?`<div class="toast" style="background:${state.toast.type==='success'?'#1A7A4A':state.toast.type==='error'?'#D62828':'#002B7F'};color:#fff">${esc(state.toast.msg)}</div>`:'';
+    return;
+  }
   render();
 }
 
@@ -317,7 +329,8 @@ async function toggleCheck(day,section,idx){
   if(!cs[day])cs[day]={};
   if(!cs[day][section])cs[day][section]={};
   cs[day][section]={...cs[day][section],[idx]:newVal};
-  setState({checkState:cs});
+  state.checkState=cs; // Update state directly without triggering modal re-render
+  render();
   try{await sb.upsert('checklist_state',{id:`${day}_${section}_${idx}`,data:day,secao:section,indice:idx,concluido:newVal});}catch(e){}
 }
 
@@ -875,7 +888,7 @@ function render(){
     </div>
   </div>`:'';
 
-  const toastHTML=state.toast.msg?`<div class="toast" style="background:${state.toast.type==='success'?'#1A7A4A':state.toast.type==='error'?'#D62828':'#002B7F'};color:#fff">${esc(state.toast.msg)}</div>`:'';
+  const toastHTML=''; // Toast handled by separate container
 
   document.getElementById('app').innerHTML=`
     <div class="app">
@@ -897,19 +910,49 @@ function render(){
       </div>
     </div>
     ${sidebarHTML}
-    ${modalHTML()}
     ${toastHTML}`;
+
+  // Modal in separate container to prevent re-render on input
+  let modalContainer=document.getElementById('modal-container');
+  if(!modalContainer){
+    modalContainer=document.createElement('div');
+    modalContainer.id='modal-container';
+    document.body.appendChild(modalContainer);
+  }
+  modalContainer.innerHTML=modalHTML();
 
   // Scroll IA to bottom
   if(state.tab==='ia'){
     const el=document.getElementById('ia-msgs');
     if(el)el.scrollTop=el.scrollHeight;
   }
+
+  // Render modal separately so it doesn't interfere with content
+  const modalEl=document.getElementById('modal-container');
+  if(modalEl)modalEl.innerHTML=modalHTML();
 }
 
 // ═══════════════════════════════
 // INIT
 // ═══════════════════════════════
+// Create persistent containers
+const toastContainer=document.createElement('div');
+toastContainer.id='toast-container';
+document.body.appendChild(toastContainer);
+const modalContainer=document.createElement('div');
+modalContainer.id='modal-container';
+document.body.appendChild(modalContainer);
+
+// Override showToast to use container
+const _showToast=showToast;
+function showToast(msg,type=''){
+  if(state.toastTimer)clearTimeout(state.toastTimer);
+  state.toast={msg,type};
+  const bg=type==='success'?'#1A7A4A':type==='error'?'#D62828':'#002B7F';
+  toastContainer.innerHTML=msg?`<div class="toast" style="background:${bg};color:#fff">${esc(msg)}</div>`:'';
+  state.toastTimer=setTimeout(()=>{state.toast={msg:'',type:''};toastContainer.innerHTML='';},2500);
+}
+
 render();
 loadAll();
 setInterval(loadAll,30000);
