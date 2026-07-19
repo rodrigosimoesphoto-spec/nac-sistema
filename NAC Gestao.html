@@ -523,13 +523,15 @@ function buildCtx(){
 async function sendIA(msg){
   if(!msg||!msg.trim()||iaBusy)return;
   iaBusy=true;
-  iaHist.push({r:'user',t:msg});
+  const userMsg=msg.trim();
+  iaHist.push({r:'user',t:userMsg});
+  // Clear input
   const inp=document.getElementById('ai-inp-el');
-  if(inp)inp.value='';
+  if(inp){inp.value='';inp.style.height='auto';}
   renderIA();
   try{
     const messages=iaHist.slice(-8).map(m=>({role:m.r==='user'?'user':'assistant',content:m.t}));
-    const r=await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+KEY},body:JSON.stringify({system:`Assistente NAC Marista. Direto, sem formalidade.\n\n${buildCtx()}`,messages})});
+    const r=await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+KEY},body:JSON.stringify({system:`Você é o assistente de gestão do NAC (Núcleo de Atividades Complementares) de um colégio Marista. Fale em português direto, sem formalidade. Seja objetivo e prático.\n\nDados em tempo real:\n${buildCtx()}`,messages})});
     const d=await r.json();
     iaHist.push({r:'bot',t:d.content?.map(c=>c.text||'').join('')||'Erro.'});
   }catch(e){iaHist.push({r:'bot',t:'Erro ao conectar.'});}
@@ -538,9 +540,16 @@ async function sendIA(msg){
 
 function renderIA(){
   const el=document.getElementById('ia-msgs-el');
-  if(!el)return;
+  if(!el){
+    // IA panel not visible — re-render full page if on ia tab
+    if(tab==='ia') render();
+    return;
+  }
   el.innerHTML=iaHist.map(m=>`<div class="ai-msg ${m.r==='user'?'user':'bot'}">${esc(m.t).replace(/\n/g,'<br>')}</div>`).join('')+(iaBusy?'<div class="ai-msg thinking">Analisando...</div>':'');
   el.scrollTop=el.scrollHeight;
+  // Update send button state
+  const btn=document.querySelector('.ai-send');
+  if(btn) btn.disabled=iaBusy;
 }
 
 async function genBriefing(){
@@ -838,19 +847,22 @@ function iaHTML(){
   const quick=[['📊 Briefing do dia','Faça um briefing completo do dia com prioridades, riscos e recomendações.'],['⚠️ Análise de riscos','Analise a semana e identifique riscos e prioridades.'],['🔴 Tarefas em atraso','Quais tarefas estão atrasadas? Liste com prioridade de ação.'],['🎯 Foco agora','Quais as 3 coisas mais importantes para focar agora?'],['💡 Priorizar melhorias','Analise as melhorias e sugira por onde começar.'],['📝 Resumo da semana','Resuma a semana: o que foi concluído e o que ficou pendente.']].map(([l,m])=>`<button class="qbtn" onclick="sendIA(${JSON.stringify(m)})">${l}</button>`).join('');
   const msgs=iaHist.map(m=>`<div class="ai-msg ${m.r==='user'?'user':'bot'}">${esc(m.t).replace(/\n/g,'<br>')}</div>`).join('')+(iaBusy?'<div class="ai-msg thinking">Analisando...</div>':'');
   return`<div class="sec-title">Assistente IA</div>
-  <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;align-items:start">
-    <div class="card" style="margin-bottom:0">
-      <div style="background:#002B7F;padding:12px 14px;display:flex;align-items:center;gap:8px">
-        <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:14px">🤖</div>
-        <div><div style="color:#fff;font-size:13px;font-weight:700">Assistente NAC</div><div style="color:rgba(255,255,255,.55);font-size:10px">Dados em tempo real · Supabase</div></div>
-      </div>
-      <div class="ai-msgs" id="ia-msgs-el">${msgs}</div>
-      <div class="ai-row">
-        <textarea class="ai-inp" id="ai-inp-el" placeholder="Pergunte sobre o NAC..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendIA(this.value)}"></textarea>
-        <button class="ai-send" onclick="sendIA(document.getElementById('ai-inp-el')?.value)" ${iaBusy?'disabled':''}>➤</button>
-      </div>
+  <div class="card" style="margin-bottom:14px">
+    <div style="background:#002B7F;padding:12px 14px;display:flex;align-items:center;gap:8px;border-radius:12px 12px 0 0">
+      <div style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:14px">🤖</div>
+      <div><div style="color:#fff;font-size:13px;font-weight:700">Assistente NAC</div><div style="color:rgba(255,255,255,.55);font-size:10px">Dados em tempo real · Supabase</div></div>
     </div>
-    <div class="card" style="margin-bottom:0"><div class="card-head"><span class="card-title">⚡ Ações rápidas</span></div><div class="card-body">${quick}</div></div>
+    <div class="ai-msgs" id="ia-msgs-el">${msgs}</div>
+    <div class="ai-row">
+      <textarea class="ai-inp" id="ai-inp-el" placeholder="Pergunte sobre o NAC..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();const v=this.value;this.value='';sendIA(v)}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+      <button class="ai-send" onclick="const el=document.getElementById('ai-inp-el');if(el){const v=el.value;el.value='';sendIA(v);}" ${iaBusy?'disabled':''}>➤</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <div class="card-head"><span class="card-title">⚡ Ações rápidas</span></div>
+    <div class="card-body">${quick}</div>
   </div>`;
 }
 
