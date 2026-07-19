@@ -531,7 +531,9 @@ async function sendIA(msg){
   renderIA();
   try{
     const messages=iaHist.slice(-8).map(m=>({role:m.r==='user'?'user':'assistant',content:m.t}));
-    const r=await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+KEY},body:JSON.stringify({system:`Você é o assistente de gestão do NAC (Núcleo de Atividades Complementares) de um colégio Marista. Fale em português direto, sem formalidade. Seja objetivo e prático.\n\nDados em tempo real:\n${buildCtx()}`,messages})});
+    const r=await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+KEY},body:JSON.stringify({system:'Você é o assistente do NAC Marista. Português direto, sem formalidade.
+
+'+buildCtx(),messages})}));
     const d=await r.json();
     iaHist.push({r:'bot',t:d.content?.map(c=>c.text||'').join('')||'Erro.'});
   }catch(e){iaHist.push({r:'bot',t:'Erro ao conectar.'});}
