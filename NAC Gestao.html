@@ -397,15 +397,17 @@ async function submitTask(){
     item.concluido_em=cdt?(cdt+'T'+(chr||'00:00')):new Date().toISOString();
   }
   try{
-    if(id){await db.patch('tarefas',id,item);tasks=tasks.map(t=>t.id===id?{...t,...item}:t);}
-    else{await db.post('tarefas',item);tasks=[item,...tasks];}
-    modalClose();render();toast('Tarefa salva!','ok');
+    if(id){await db.patch('tarefas',id,item);}
+    else{await db.post('tarefas',item);}
+    modalClose();
+    await loadAll();
+    toast('Tarefa salva!','ok');
   }catch(e){toast('Erro ao salvar','err');}
 }
 
 async function doDelTask(id){
   if(!confirm('Excluir esta tarefa?'))return;
-  try{await db.del('tarefas',id);tasks=tasks.filter(t=>t.id!==id);modalClose();render();toast('Excluída.');}
+  try{await db.del('tarefas',id);modalClose();await loadAll();toast('Excluída.');}
   catch(e){toast('Erro','err');}
 }
 
@@ -415,15 +417,15 @@ async function submitMel(){
   const id=mData?.mel?.id;
   const item={id:id||uid(),problema,sugestao:gv('pm-sug'),prioridade:gv('pm-prio')||'Média',impacto:gv('pm-imp')||'Médio',responsavel:gv('pm-resp')||'Coordenador',setor:gv('pm-setor'),prazo:gv('pm-prazo'),status:gv('pm-status')||'Identificado'};
   try{
-    if(id){await db.patch('melhorias',id,item);mels=mels.map(m=>m.id===id?{...m,...item}:m);}
-    else{await db.post('melhorias',item);mels=[item,...mels];}
-    modalClose();render();toast('Melhoria salva!','ok');
+    if(id){await db.patch('melhorias',id,item);}
+    else{await db.post('melhorias',item);}
+    modalClose();await loadAll();toast('Melhoria salva!','ok');
   }catch(e){toast('Erro','err');}
 }
 
 async function doDelMel(id){
   if(!confirm('Excluir?'))return;
-  try{await db.del('melhorias',id);mels=mels.filter(m=>m.id!==id);modalClose();render();toast('Excluída.');}
+  try{await db.del('melhorias',id);modalClose();await loadAll();toast('Excluída.');}
   catch(e){toast('Erro','err');}
 }
 
@@ -435,8 +437,7 @@ async function submitLog(day){
   const item={id:uid(),data:day,tipo,texto,hora};
   try{
     await db.post('logs',item);
-    logs=[item,...logs];
-    modalClose();render();toast('Registrado!','ok');
+    modalClose();await loadAll();toast('Registrado!','ok');
   }catch(e){toast('Erro','err');}
 }
 
