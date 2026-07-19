@@ -555,7 +555,7 @@ function renderIA(){
 async function genBriefing(){
   briefingLoading=true;briefing='';render();
   try{
-    const r=await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+KEY},body:JSON.stringify({system:`Assistente NAC. Dados: ${buildCtx()}`,messages:[{role:'user',content:'Briefing direto: prioridades, riscos, recomendações. Bullets. Máx 200 palavras.'}]})});
+    const r=await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+KEY},body:JSON.stringify({system:'Assistente NAC Marista. Dados:\n'+buildCtx(),messages:[{role:'user',content:'Briefing direto: prioridades, riscos, recomendações. Bullets. Máx 200 palavras.'}]})});
     const d=await r.json();
     briefing=d.content?.map(c=>c.text||'').join('')||'Erro.';
   }catch(e){briefing='Erro ao conectar.';}
