@@ -308,11 +308,11 @@ function modalOpen(type,data){
     const r3=row(); r3.appendChild(fg('Prioridade',sel('pm-prio',['Alta','Média','Baixa'],t.prioridade||'Média'))); r3.appendChild(fg('Status',sel('pm-status',['Não iniciado','Em andamento','Aguardando','Concluído'],t.status||'Não iniciado'))); formEl.appendChild(r3);
     formEl.appendChild(fg('Categoria',inp('pm-cat','pm-cat',t.categoria||'','Ex: Administrativo')));
     formEl.appendChild(fg('Observações',txt('pm-obs',t.observacoes||'')));
-    if(t.status==='Concluído'||t.concluidoPor){
+    if(t.status==='Concluído'||t.concluido_por){
       const r4=row3();
-      r4.appendChild(fg('Concluído por',inp('pm-cby','pm-cby',t.concluidoPor||'','')));
-      r4.appendChild(fg('Data conclusão',inp('pm-cdt','pm-cdt',t.concluidoEm?t.concluidoEm.slice(0,10):'','','date')));
-      r4.appendChild(fg('Hora conclusão',inp('pm-chr','pm-chr',t.concluidoEm?t.concluidoEm.slice(11,16):'','','time')));
+      r4.appendChild(fg('Concluído por',inp('pm-cby','pm-cby',t.concluido_por||'','')));
+      r4.appendChild(fg('Data conclusão',inp('pm-cdt','pm-cdt',t.concluido_em?t.concluido_em.slice(0,10):'','','date')));
+      r4.appendChild(fg('Hora conclusão',inp('pm-chr','pm-chr',t.concluido_em?t.concluido_em.slice(11,16):'','','time')));
       formEl.appendChild(r4);
     }
     // Footer
@@ -387,14 +387,14 @@ async function submitTask(){
     status:statusVal,
     categoria:gv('pm-cat'),
     observacoes:gv('pm-obs'),
-    criadoPor: id?mData.task.criadoPor:'Coordenador',
-    criadoEm: id?mData.task.criadoEm:new Date().toISOString(),
+    criado_por: id?mData.task.criado_por:'Coordenador',
+    criado_em: id?mData.task.criado_em:new Date().toISOString(),
   };
   // If concluded, record who/when
   if(statusVal==='Concluído'){
-    item.concluidoPor=gv('pm-cby')||'Coordenador';
+    item.concluido_por=gv('pm-cby')||'Coordenador';
     const cdt=gv('pm-cdt'), chr=gv('pm-chr');
-    item.concluidoEm=cdt?(cdt+'T'+(chr||'00:00')):new Date().toISOString();
+    item.concluido_em=cdt?(cdt+'T'+(chr||'00:00')):new Date().toISOString();
   }
   try{
     if(id){await db.patch('tarefas',id,item);tasks=tasks.map(t=>t.id===id?{...t,...item}:t);}
@@ -566,7 +566,7 @@ function taskH(t,showDate=false){
         <span>👤 ${esc(t.responsavel||'')}</span>
         ${t.destinatario?`<span>→ ${esc(t.destinatario)}</span>`:''}
         <span class="badge ${bcls(t.status)}">${esc(t.status)}</span>
-        ${t.status==='Concluído'&&t.concluidoPor?`<span>✅ ${esc(t.concluidoPor)}</span>`:''}
+        ${t.status==='Concluído'&&t.concluido_por?`<span>✅ ${esc(t.concluido_por)}</span>`:''}
       </div>
     </div>
   </div>`;
@@ -794,7 +794,7 @@ function semanaHTML(){
               <span>👤 ${esc(t.responsavel||'')}</span>
               ${t.destinatario?`<span>→ ${esc(t.destinatario)}</span>`:''}
               <span class="badge ${bcls(t.status)}">${t.status}</span>
-              ${t.status==='Concluído'&&t.concluidoPor?`<span>✅ ${esc(t.concluidoPor)}</span>`:''}
+              ${t.status==='Concluído'&&t.concluido_por?`<span>✅ ${esc(t.concluido_por)}</span>`:''}
             </div>
           </div>
         </div>`).join('')}
