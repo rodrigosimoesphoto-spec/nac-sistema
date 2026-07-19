@@ -121,6 +121,7 @@ input,select,textarea{font-family:'Inter',sans-serif;-webkit-appearance:none;fon
 
 /* ── WEEK VIEW ── */
 .week-grid{display:grid;gap:12px;margin-bottom:14px}
+@media(max-width:768px){.week-grid{grid-template-columns:1fr !important}}
 .week-col{background:#fff;border:1px solid #D4D9ED;border-radius:12px;overflow:hidden}
 .week-col.today{border:2px solid #002B7F;box-shadow:0 4px 16px rgba(0,43,127,.12)}
 .week-col-head{padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
@@ -645,6 +646,13 @@ function rotinaHTML(){
   // Sugestões para adicionar
   const sugestoes=['Conferir escala de professores','Reunião de equipe','Ligar para famílias','Conferir frequência','Verificar estoque de materiais','Planejar atividades da semana'];
 
+  // Show today card separately if today is not in Mon-Fri range
+  const weekDsSet=new Set(dates.map(d=>d.toISOString().slice(0,10)));
+  const todayCardHTML=!weekDsSet.has(td)?`<div class="week-col today" style="margin-bottom:12px">
+    <div class="week-col-head"><div><div class="week-day-name">Hoje — ${fmtDL(td)}</div><div class="week-day-date">Domingo não está na grade seg-sex</div></div><span style="background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px">HOJE</span></div>
+    <div class="week-body"><div class="week-add" onclick="modalOpen('task',{task:null,date:'${td}'})">+ Adicionar tarefa para hoje</div></div>
+  </div>`:'';
+
   const cols=dates.map(d=>{
     const ds=d.toISOString().slice(0,10);
     const isT=ds===td;
@@ -754,7 +762,7 @@ function rotinaHTML(){
   </div>
   <div style="font-size:11px;color:#9CA3AF;margin-bottom:10px">💡 Sugestões de itens: ${sugestoes.map(s=>`<button onclick="addSugestao(${JSON.stringify(s)})" style="background:#F0F2F8;border:1px solid #D4D9ED;border-radius:5px;padding:2px 8px;font-size:10px;color:#4B5563;cursor:pointer;margin:2px;font-family:Inter,sans-serif">${s}</button>`).join('')}</div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px">
-    <div class="week-grid" style="grid-template-columns:repeat(5,minmax(280px,1fr));min-width:1400px">${cols}</div>
+    <div class="week-grid" style="grid-template-columns:repeat(5,minmax(280px,1fr))">${cols}</div>
   </div>`;
 }
 
@@ -771,6 +779,13 @@ function semanaHTML(){
   const s=dates[0].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
   const e=dates[4].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
   const td=today();
+
+  // Show today card separately if today is not in Mon-Fri range
+  const weekDsSet=new Set(dates.map(d=>d.toISOString().slice(0,10)));
+  const todayCardHTML=!weekDsSet.has(td)?`<div class="week-col today" style="margin-bottom:12px">
+    <div class="week-col-head"><div><div class="week-day-name">Hoje — ${fmtDL(td)}</div><div class="week-day-date">Domingo não está na grade seg-sex</div></div><span style="background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px">HOJE</span></div>
+    <div class="week-body"><div class="week-add" onclick="modalOpen('task',{task:null,date:'${td}'})">+ Adicionar tarefa para hoje</div></div>
+  </div>`:'';
 
   const cols=dates.map(d=>{
     const ds=d.toISOString().slice(0,10);
@@ -813,8 +828,9 @@ function semanaHTML(){
       <button class="btn sm" onclick="modalOpen('task',{task:null,date:''})">+ Nova tarefa</button>
     </div>
   </div>
+  ${todayCardHTML}
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px">
-    <div class="week-grid" style="grid-template-columns:repeat(5,minmax(240px,1fr));min-width:1200px">${cols}</div>
+    <div class="week-grid" style="grid-template-columns:repeat(5,minmax(260px,1fr))">${cols}</div>
   </div>`;
 }
 
