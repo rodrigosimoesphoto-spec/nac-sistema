@@ -303,7 +303,7 @@ function modalOpen(type,data){
     // Fields
     formEl.appendChild(fg('Título',inp('pm-t','pm-t',t.titulo||'','O que precisa ser feito?')));
     formEl.appendChild(fg('Descrição',txt('pm-d',t.descricao||'')));
-    const r1=row(); r1.appendChild(fg('Data',inp('pm-data','pm-data',t.data||data.date||today(),'','date'))); r1.appendChild(fg('Horário',inp('pm-hr','pm-hr',t.hora||'','','time'))); formEl.appendChild(r1);
+    const r1=row(); r1.appendChild(fg('Data',inp('pm-data','pm-data',t.data||data.date||'',' ','date'))); r1.appendChild(fg('Horário',inp('pm-hr','pm-hr',t.hora||'','','time'))); formEl.appendChild(r1);
     const r2=row(); r2.appendChild(fg('Responsável',sel('pm-resp',['Coordenador','Assistente','Ambos'],t.responsavel||'Coordenador'))); r2.appendChild(fg('Destinatário',inp('pm-dest','pm-dest',t.destinatario||'','Para quem é?'))); formEl.appendChild(r2);
     const r3=row(); r3.appendChild(fg('Prioridade',sel('pm-prio',['Alta','Média','Baixa'],t.prioridade||'Média'))); r3.appendChild(fg('Status',sel('pm-status',['Não iniciado','Em andamento','Aguardando','Concluído'],t.status||'Não iniciado'))); formEl.appendChild(r3);
     formEl.appendChild(fg('Categoria',inp('pm-cat','pm-cat',t.categoria||'','Ex: Administrativo')));
@@ -624,7 +624,7 @@ function dashHTML(){
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <div>
-      <div class="card"><div class="card-head"><span class="card-title">📋 Tarefas de hoje</span><button class="btn sm" onclick="modalOpen('task',{task:null,date:'${td}'})">+ Adicionar</button></div><div class="card-body">${tj.length?tj.sort((a,b)=>a.hora>b.hora?1:-1).map(t=>taskH(t)).join(''):'<div class="empty">Sem tarefas para hoje</div>'}</div></div>
+      <div class="card"><div class="card-head"><span class="card-title">📋 Tarefas de hoje</span><button class="btn sm" onclick="modalOpen('task',{task:null,date:''})">+ Adicionar</button></div><div class="card-body">${tj.length?tj.sort((a,b)=>a.hora>b.hora?1:-1).map(t=>taskH(t)).join(''):'<div class="empty">Sem tarefas para hoje</div>'}</div></div>
       ${at.length?`<div class="card"><div class="card-head"><span class="card-title">⚠️ Pendências em atraso</span></div><div class="card-body">${at.slice(0,4).map(t=>taskH(t,true)).join('')}</div></div>`:''}
     </div>
     <div>
@@ -810,7 +810,7 @@ function semanaHTML(){
       <button class="btn ghost sm" onclick="wkOff--;render()">‹ Anterior</button>
       <button class="btn ghost sm" onclick="wkOff=0;render()">Hoje</button>
       <button class="btn ghost sm" onclick="wkOff++;render()">Próxima ›</button>
-      <button class="btn sm" onclick="modalOpen('task',{task:null,date:'${td}'})">+ Nova tarefa</button>
+      <button class="btn sm" onclick="modalOpen('task',{task:null,date:''})">+ Nova tarefa</button>
     </div>
   </div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px">
