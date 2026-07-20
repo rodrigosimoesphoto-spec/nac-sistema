@@ -510,12 +510,12 @@ function dashHTML(){
   if(briefingLoading)brf='<div class="card"><div class="card-body" style="color:#9CA3AF;font-style:italic">Analisando dados do NAC...</div></div>';
   else if(briefing)brf='<div class="card"><div class="card-head"><span class="card-title">Briefing do dia</span><button class="btn ghost sm" onclick="briefing=\'\';render()">x</button></div><div class="card-body" style="font-size:13px;line-height:1.7;white-space:pre-wrap">'+esc(briefing)+'</div></div>';
 
- var abPrev=ab.slice(0,6).map(function(item,i){
-  var checked=abSt[i];
-  return '<div class="chk-item" onclick="toggleCheck(\''+td+'\',\'abertura\','+i+')">'
-    +'<div class="chk-box'+(checked?' blue':'')+'">'+(checked?'<span style="color:#fff;font-size:10px;font-weight:700">v</span>':'')+'</div>'
-    +'<span class="chk-lbl'+(checked?' done':'')+'">'+esc(item)+'</span></div>';
-}).join('');
+  var abPrev=ab.slice(0,6).map(function(item,i){
+    var checked=abSt[i];
+    return '<div class="chk-item" onclick="toggleCheck(\''+td+'\',\'abertura\','+i+')">'
+      +'<div class="chk-box'+(checked?' blue':'')+'">'+(checked?'<span style="color:#fff;font-size:10px;font-weight:700">v</span>':'')+'</div>'
+      +'<span class="chk-lbl'+(checked?' done':'\'")>'+esc(item)+'</span></div>';
+  }).join('');
 
   var taskTH=tj.length?tj.sort(function(a,b){return a.hora>b.hora?1:-1;}).map(function(t){return taskH(t,false);}).join(''):'<div class="empty">Sem tarefas para hoje</div>';
   var atH=at.length?at.slice(0,4).map(function(t){return taskH(t,true);}).join(''):'';
