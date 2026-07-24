@@ -219,6 +219,27 @@ function modalOpen(type,data){
     var r2=row();r2.appendChild(fg('Responsavel',sel('pm-resp',['Coordenador','Assistente','Ambos'],t.responsavel||'Coordenador')));r2.appendChild(fg('Destinatario',inp('pm-dest',t.destinatario||'','Para quem e?')));formEl.appendChild(r2);
     var r3=row();r3.appendChild(fg('Prioridade',sel('pm-prio',['Alta','Media','Baixa'],t.prioridade||'Media')));r3.appendChild(fg('Status',sel('pm-status',['Nao iniciado','Em andamento','Aguardando','Concluido'],t.status||'Nao iniciado')));formEl.appendChild(r3);
     formEl.appendChild(fg('Categoria',inp('pm-cat',t.categoria||'','Ex: Administrativo')));
+    // Recorrencia
+    var recDiv=document.createElement('div');recDiv.className='fg';
+    var recLbl=document.createElement('label');recLbl.className='flbl';recLbl.textContent='Repetir nos dias';recDiv.appendChild(recLbl);
+    var diasAtivos=t.dias_semana?t.dias_semana.split(','):[];
+    var diasNomes=['Seg','Ter','Qua','Qui','Sex'];
+    var diasVals=['1','2','3','4','5'];
+    var diasRow=document.createElement('div');diasRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-top:4px';
+    diasVals.forEach(function(v,i){
+      var btn=document.createElement('button');
+      btn.type='button';btn.textContent=diasNomes[i];btn.dataset.dia=v;
+      btn.style.cssText='padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid '+(diasAtivos.indexOf(v)>=0?'#002B7F':'#D4D9ED')+';background:'+(diasAtivos.indexOf(v)>=0?'#002B7F':'#fff')+';color:'+(diasAtivos.indexOf(v)>=0?'#fff':'#4B5563');
+      btn.onclick=function(){
+        var active=this.style.background==='rgb(0, 43, 127)';
+        this.style.background=active?'#fff':'#002B7F';
+        this.style.color=active?'#4B5563':'#fff';
+        this.style.borderColor=active?'#D4D9ED':'#002B7F';
+      };
+      diasRow.appendChild(btn);
+    });
+    recDiv.appendChild(diasRow);
+    formEl.appendChild(recDiv);
     formEl.appendChild(fg('Observacoes',txt('pm-obs',t.observacoes||'')));
     if(t.status==='Concluido'||t.concluido_por){
       var r4=row3();
@@ -283,7 +304,12 @@ function submitTask(){
   if(!titulo.trim()){toast('Informe o titulo','err');return;}
   var id=mData&&mData.task?mData.task.id:null;
   var statusVal=gv('pm-status')||'Nao iniciado';
-  var item={id:id||uid(),titulo:titulo,descricao:gv('pm-d'),data:gv('pm-data'),hora:gv('pm-hr'),responsavel:gv('pm-resp')||'Coordenador',destinatario:gv('pm-dest'),prioridade:gv('pm-prio')||'Media',status:statusVal,categoria:gv('pm-cat'),observacoes:gv('pm-obs'),criado_por:id&&mData.task.criado_por?mData.task.criado_por:'Coordenador',criado_em:id&&mData.task.criado_em?mData.task.criado_em:new Date().toISOString()};
+  // Read selected days
+  var diasSel=[];
+  var diasBtns=document.querySelectorAll('[data-dia]');
+  diasBtns.forEach(function(b){if(b.style.background==='rgb(0, 43, 127)')diasSel.push(b.dataset.dia);});
+  var diasStr=diasSel.join(',');
+  var item={id:id||uid(),titulo:titulo,descricao:gv('pm-d'),data:gv('pm-data'),hora:gv('pm-hr'),responsavel:gv('pm-resp')||'Coordenador',destinatario:gv('pm-dest'),prioridade:gv('pm-prio')||'Media',status:statusVal,categoria:gv('pm-cat'),observacoes:gv('pm-obs'),dias_semana:diasStr,recorrente:diasSel.length>0,criado_por:id&&mData.task.criado_por?mData.task.criado_por:'Coordenador',criado_em:id&&mData.task.criado_em?mData.task.criado_em:new Date().toISOString()};
   if(statusVal==='Concluido'){
     item.concluido_por=gv('pm-cby')||'Coordenador';
     var cdt=gv('pm-cdt'),chr=gv('pm-chr');
@@ -521,6 +547,10 @@ function dashHTML(){
   var atH=at.length?at.slice(0,4).map(function(t){return taskH(t,true);}).join(''):'';
   var mpH=mp.length?mp.slice(0,4).map(function(m){return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #E8EBF5"><div class="pdot" style="background:'+pdot(m.prioridade)+'"></div><span style="font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc((m.problema||'').slice(0,55))+'</span><span class="badge '+bcls(m.status)+'">'+esc(m.status)+'</span></div>';}).join(''):'<div class="empty">Nenhuma melhoria pendente</div>';
 
+  // Today tasks for week overview
+  var wDates=wkDates(0);
+  var wAllTasks=allTasksForWeek(wDates);
+
   return '<div class="sec-row">'
     +'<div><div style="font-family:Montserrat,sans-serif;font-size:18px;font-weight:800;color:#111827">'+gr+' </div><div style="font-size:12px;color:#9CA3AF;margin-top:2px">'+fmtDL(td)+'</div></div>'
     +'<button class="btn" onclick="genBriefing()">Briefing IA</button></div>'
@@ -531,12 +561,13 @@ function dashHTML(){
     +'<div class="kpi kamber"><div class="kpi-n">'+mp.length+'</div><div class="kpi-l">Melhorias</div><div class="kpi-t">em andamento</div></div>'
     +'<div class="kpi"><div class="kpi-n">'+abDone+'/'+ab.length+'</div><div class="kpi-l">Checklist</div><div class="kpi-t">abertura hoje</div></div>'
     +'</div>'
+    +'<div class="card" style="margin-bottom:14px"><div class="card-head"><span class="card-title">Semana atual</span><button class="btn ghost sm" onclick="tab=&quot;semana&quot;;render()">Ver completo</button></div><div class="card-body"><div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">'+miniWeek+'</div></div></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
     +'<div><div class="card"><div class="card-head"><span class="card-title">Tarefas de hoje</span><button class="btn sm" onclick="modalOpen(\'task\',{task:null,date:\'\'})">+ Adicionar</button></div><div class="card-body">'+taskTH+'</div></div>'
     +(at.length?'<div class="card"><div class="card-head"><span class="card-title">Pendencias em atraso</span></div><div class="card-body">'+atH+'</div></div>':'')
     +'</div>'
     +'<div><div class="card"><div class="card-head"><span class="card-title">Checklist de abertura</span><span class="badge b-gray">'+abDone+'/'+ab.length+'</span></div><div class="card-body">'+abPrev+(ab.length>6?'<div style="font-size:11px;color:#9CA3AF;text-align:center;margin-top:8px">+'+(ab.length-6)+' itens na Rotina</div>':'')+'</div></div>'
-    +(mp.length?'<div class="card"><div class="card-head"><span class="card-title">Melhorias pendentes</span><button class="btn ghost sm" onclick="tab=\'melhorias\';render()">Ver todas</button></div><div class="card-body">'+mpH+'</div></div>':'')
+    +(mp.length?'<div class="card"><div class="card-head"><span class="card-title">Melhorias pendentes</span><button class="btn ghost sm" onclick="tab=&quot;melhorias&quot;;render()">Ver todas</button></div><div class="card-body">'+mpH+'</div></div>':'')
     +'</div></div>';
 }
 
@@ -571,8 +602,8 @@ function rotinaHTML(){
         +'<div style="font-size:11px;color:#111827;line-height:1.4">'+esc(l.texto.slice(0,80))+(l.texto.length>80?'...':'')+'</div></div>';
     }).join(''):'<div style="font-size:12px;color:#9CA3AF;text-align:center;padding:8px 0">Sem registros</div>';
 
-    return '<div class="week-col'+(isT?' today':'')+'">'
-      +'<div class="week-col-head"><div><div class="week-day-name">'+DAYS_FULL[d.getDay()]+'</div><div class="week-day-date">'+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})+'</div></div>'+(isT?'<span style="background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px">HOJE</span>':'')+'</div>'
+    return '<div class="week-col'+(isT?' today':'')+'" ondragover="dragOver(event)" ondrop="drop(event,''+ds+'')">'
+      +'<div class="week-col-head" style="'+(isT?'padding:14px 16px':'')+'"><div><div class="week-day-name" style="'+(isT?'font-size:15px':'')+'">'+DAYS_FULL[d.getDay()]+'</div><div class="week-day-date">'+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})+'</div></div>'+(isT?'<span style="background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px">HOJE</span>':'')+'</div>'
       +'<div class="week-body">'
       +'<div style="margin-bottom:14px">'+chkSectionH(ds,'abertura','blue','Abertura')+'</div>'
       +'<div style="margin-bottom:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:12px;font-weight:700;color:#111827">Tarefas ('+dt.length+')</span><button onclick="modalOpen(\'task\',{task:null,date:\''+ds+'\'})" style="background:none;border:1px solid #D4D9ED;border-radius:5px;width:22px;height:22px;font-size:13px;cursor:pointer;color:#4B5563;display:flex;align-items:center;justify-content:center">+</button></div>'+taskItems+'</div>'
@@ -596,6 +627,7 @@ function semanaHTML(){
   var s=dates[0].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
   var e=dates[4].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
   var td=today();
+  var allWkTasks=allTasksForWeek(dates);
 
   var weekDs=dates.map(function(d){return d.toISOString().slice(0,10);});
   var todayInWeek=weekDs.indexOf(td)>=0;
@@ -609,10 +641,54 @@ function semanaHTML(){
       +'</div>';
   }
 
+  var todayDs=td;
+  var todayInWeek=dates.some(function(d){return d.toISOString().slice(0,10)===todayDs;});
+
+  // Build today card (big) if in this week
+  var todayBigHTML='';
+  dates.forEach(function(d){
+    var ds=d.toISOString().slice(0,10);
+    if(ds!==todayDs)return;
+    var dt=allWkTasks.filter(function(t){return t.data===ds;}).sort(function(a,b){return a.hora>b.hora?1:-1;});
+    var taskItems=dt.map(function(t){
+      return '<div class="week-task" draggable="true" data-id="'+t.id+'" data-date="'+ds+'" ondragstart="dragStart(event)" ondragend="dragEnd(event)" onclick="modalOpen('task',{task:tasks.find(function(x){return x.id===''+t.id+'';})})">'
+        +'<div class="pdot" style="background:'+pdot(t.prioridade)+';margin-top:3px;width:9px;height:9px"></div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:14px;font-weight:600;color:'+(t.status==='Concluido'?'#9CA3AF':'#111827')+';text-decoration:'+(t.status==='Concluido'?'line-through':'none')+'">'+esc(t.titulo)+'</div>'
+        +(t.descricao?'<div style="font-size:12px;color:#9CA3AF;margin-top:3px;line-height:1.4">'+esc(t.descricao.slice(0,100))+'</div>':'')
+        +'<div style="font-size:11px;color:#9CA3AF;margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+        +(t.hora?'<span>'+t.hora+'</span>':'')
+        +'<span>'+esc(t.responsavel||'')+'</span>'
+        +(t.destinatario?'<span>-> '+esc(t.destinatario)+'</span>':'')
+        +'<span class="badge '+bcls(t.status)+'">'+esc(t.status)+'</span>'
+        +(t.recorrente?'<span class="badge b-blue">Recorrente</span>':'')
+        +'</div></div></div>';
+    }).join('');
+    todayBigHTML='<div class="week-col today" style="margin-bottom:16px" ondragover="dragOver(event)" ondrop="drop(event,''+ds+'')">'
+      +'<div class="week-col-head" style="padding:16px 20px">'
+      +'<div><div class="week-day-name" style="font-size:16px">'+DAYS_FULL[d.getDay()]+'</div>'
+      +'<div class="week-day-date" style="font-size:13px">'+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})+'</div></div>'
+      +'<span style="background:rgba(255,255,255,.25);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px">HOJE</span>'
+      +'</div>'
+      +'<div class="week-body">'+taskItems
+      +'<div class="week-add" onclick="modalOpen('task',{task:null,date:''+ds+''})">+ Adicionar tarefa para hoje</div>'
+      +'</div></div>';
+  });
+
+  if(!todayInWeek){
+    todayBigHTML='<div class="week-col today" style="margin-bottom:16px">'
+      +'<div class="week-col-head"><div><div class="week-day-name">Hoje - '+fmtDL(todayDs)+'</div>'
+      +'<div class="week-day-date">Hoje nao esta nesta semana</div></div>'
+      +'<span style="background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px">HOJE</span></div>'
+      +'<div class="week-body"><div class="week-add" onclick="modalOpen(&quot;task&quot;,{task:null,date:&quot;&quot;})">+ Adicionar tarefa para hoje</div></div>'
+      +'</div>';
+  }
+
   var cols=dates.map(function(d){
     var ds=d.toISOString().slice(0,10);
-    var isT=ds===td;
-    var dt=tasks.filter(function(t){return t.data===ds;}).sort(function(a,b){return a.hora>b.hora?1:-1;});
+    var isT=ds===todayDs;
+    if(isT)return''; // today shown separately above
+    var dt=allWkTasks.filter(function(t){return t.data===ds;}).sort(function(a,b){return a.hora>b.hora?1:-1;});
     var taskItems=dt.map(function(t){
       return '<div class="week-task" onclick="modalOpen(\'task\',{task:tasks.find(function(x){return x.id===\''+t.id+'\';})})">'
         +'<div class="pdot" style="background:'+pdot(t.prioridade)+';margin-top:3px"></div>'
@@ -627,8 +703,8 @@ function semanaHTML(){
         +(t.status==='Concluido'&&t.concluido_por?'<span>'+esc(t.concluido_por)+'</span>':'')
         +'</div></div></div>';
     }).join('');
-    return '<div class="week-col'+(isT?' today':'')+'">'
-      +'<div class="week-col-head"><div><div class="week-day-name">'+DAYS_FULL[d.getDay()]+'</div><div class="week-day-date">'+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})+'</div></div>'+(isT?'<span style="background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px">HOJE</span>':'')+'</div>'
+    return '<div class="week-col'+(isT?' today':'')+'" ondragover="dragOver(event)" ondrop="drop(event,''+ds+'')">'
+      +'<div class="week-col-head" style="'+(isT?'padding:14px 16px':'')+'"><div><div class="week-day-name" style="'+(isT?'font-size:15px':'')+'">'+DAYS_FULL[d.getDay()]+'</div><div class="week-day-date">'+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})+'</div></div>'+(isT?'<span style="background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px">HOJE</span>':'')+'</div>'
       +'<div class="week-body">'+taskItems+'<div class="week-add" onclick="modalOpen(\'task\',{task:null,date:\''+ds+'\'})">+ Adicionar tarefa</div></div>'
       +'</div>';
   }).join('');
@@ -703,6 +779,64 @@ function melHTML(){
     +'<div class="kpi kgreen"><div class="kpi-n">'+conc+'</div><div class="kpi-l">Concluidas</div></div>'
     +'<div class="kpi kred"><div class="kpi-n">'+alta+'</div><div class="kpi-l">Alta prioridade</div></div>'
     +'</div>'+items;
+}
+
+
+// ── DRAG & DROP ──────────────────────────
+var dragId=null, dragDate=null;
+
+function dragStart(e){
+  dragId=e.currentTarget.dataset.id;
+  dragDate=e.currentTarget.dataset.date;
+  e.dataTransfer.effectAllowed='move';
+  e.currentTarget.style.opacity='0.5';
+}
+
+function dragEnd(e){e.currentTarget.style.opacity='1';}
+
+function dragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';}
+
+function drop(e,newDate){
+  e.preventDefault();
+  if(!dragId||dragDate===newDate)return;
+  var task=tasks.find(function(t){return t.id===dragId;});
+  if(!task)return;
+  db.patch('tarefas',dragId,{data:newDate}).then(function(){
+    tasks=tasks.map(function(t){return t.id===dragId?Object.assign({},t,{data:newDate}):t;});
+    render();toast('Tarefa movida!','ok');
+  }).catch(function(){toast('Erro ao mover','err');});
+  dragId=null;dragDate=null;
+}
+
+// ── RECORRENCIA ──────────────────────────
+function getRecurringTasks(weekDates){
+  // For each recurring task, generate virtual instances for matching days
+  var result=[];
+  tasks.forEach(function(t){
+    if(!t.recorrente||!t.dias_semana)return;
+    var dias=t.dias_semana.split(',');
+    weekDates.forEach(function(d){
+      var dow=String(d.getDay()); // 0=dom,1=seg,...
+      if(dias.indexOf(dow)>=0){
+        var ds=d.toISOString().slice(0,10);
+        // Only add if not already a regular task on that date
+        var exists=tasks.some(function(x){return x.id===t.id&&x.data===ds;});
+        if(!exists){
+          result.push(Object.assign({},t,{data:ds,_virtual:true}));
+        }
+      }
+    });
+  });
+  return result;
+}
+
+function allTasksForWeek(weekDates){
+  var regular=tasks.filter(function(t){
+    var ds=t.data;
+    return weekDates.some(function(d){return d.toISOString().slice(0,10)===ds;});
+  });
+  var recurring=getRecurringTasks(weekDates);
+  return regular.concat(recurring);
 }
 
 var NAV=[{id:'dashboard',icon:'D',label:'Dashboard'},{id:'rotina',icon:'R',label:'Rotina'},{id:'semana',icon:'S',label:'Semana'},{id:'ia',icon:'IA',label:'IA'},{id:'melhorias',icon:'M',label:'Melhorias'}];
