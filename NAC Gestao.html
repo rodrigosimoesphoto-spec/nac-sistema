@@ -188,18 +188,54 @@ var db = {
 var DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
 var DAYS_FULL = ['Domingo','Segunda-feira','Terca-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sabado'];
 var DEFAULT_CHK = {
-  abertura: ['Conferir e-mails','Conferir Teams','Conferir WhatsApp','Conferir agenda do dia','Verificar ocorrencias','Conferir atividades NAC','Verificar pagamentos','Verificar matriculas','Conferir professores','Conferir materiais'],
-  encerramento: ['Atividades concluidas registradas','Pendencias documentadas','Demandas para amanha','Registros do dia salvos','Setor organizado']
+  abertura: [
+    {txt:'Conferir e-mails',dias:''},
+    {txt:'Conferir Teams',dias:''},
+    {txt:'Conferir WhatsApp',dias:''},
+    {txt:'Conferir agenda do dia',dias:''},
+    {txt:'Verificar ocorrencias',dias:''},
+    {txt:'Conferir atividades NAC',dias:''},
+    {txt:'Verificar pagamentos',dias:''},
+    {txt:'Verificar matriculas',dias:''},
+    {txt:'Conferir professores',dias:''},
+    {txt:'Conferir materiais',dias:''}
+  ],
+  encerramento: [
+    {txt:'Atividades concluidas registradas',dias:''},
+    {txt:'Pendencias documentadas',dias:''},
+    {txt:'Demandas para amanha',dias:''},
+    {txt:'Registros do dia salvos',dias:''},
+    {txt:'Setor organizado',dias:''}
+  ]
 };
 
+// Migrate old string format to new object format
+function migrateChecks(chk) {
+  ['abertura','encerramento'].forEach(function(sec){
+    if(!chk[sec]) return;
+    chk[sec] = chk[sec].map(function(item){
+      if(typeof item === 'string') return {txt:item,dias:''};
+      return item;
+    });
+  });
+  return chk;
+}
+
 var tasks = [], mels = [], checkState = {}, logs = [];
-var checks = JSON.parse(localStorage.getItem('nac_chk_v4') || JSON.stringify(DEFAULT_CHK));
+var checks = migrateChecks(JSON.parse(localStorage.getItem('nac_chk_v4') || JSON.stringify(DEFAULT_CHK)));
 var tab = 'dashboard', wkOff = 0, rtOff = 0, syncOk = true;
 var iaHist = [{r:'bot',t:'Ola! Sou o assistente do NAC. Estou conectado ao banco em tempo real. O que precisa?'}];
 var iaBusy = false, briefing = '', briefingLoading = false;
 var dragId = null, dragDate = null;
 
 function saveChecks() { localStorage.setItem('nac_chk_v4', JSON.stringify(checks)); }
+
+function itemVisibleOnDay(item, ds) {
+  // If dias is empty, visible every day
+  if(!item.dias) return true;
+  var dow = String(new Date(ds+'T12:00:00').getDay());
+  return item.dias.split(',').indexOf(dow) >= 0;
+}
 
 // ══════════════════════════════════════════
 // UTILS
@@ -417,10 +453,35 @@ function modalOpen(type,data) {
 
   else if(type==='addchk') {
     var sec=data.sec;
-    titleEl.textContent='Adicionar item - '+(sec==='abertura'?'Abertura':'Encerramento');
-    formEl.appendChild(mk_fg('Nome do item',mk_inp('pm-chk-txt','','Ex: Verificar escala...')));
+    var editIdx=data.editIdx;
+    var existing=editIdx!==undefined?checks[sec][editIdx]:null;
+    titleEl.textContent=existing?'Editar item':'Adicionar item - '+(sec==='abertura'?'Abertura':'Encerramento');
+    formEl.appendChild(mk_fg('Nome do item',mk_inp('pm-chk-txt',existing?existing.txt:'','Ex: Verificar escala...')));
+
+    // Days selector
+    var diasFg=div('fg');
+    var diasLbl=el('label','flbl','','Aparece em quais dias?');diasFg.appendChild(diasLbl);
+    var diasHint=div('','font-size:11px;color:#9CA3AF;margin-bottom:6px');diasHint.textContent='Deixe em branco para todos os dias';diasFg.appendChild(diasHint);
+    var diasRow2=div('','display:flex;gap:8px;flex-wrap:wrap');
+    var existingDias=existing&&existing.dias?existing.dias.split(','):[];
+    ['Seg','Ter','Qua','Qui','Sex'].forEach(function(nome,i){
+      var val=String(i+1);
+      var b=el('button','day-pill'+(existingDias.indexOf(val)>=0?' on':''),'',nome);
+      b.dataset.dia=val;b.type='button';
+      b.onclick=function(){this.classList.toggle('on');};
+      diasRow2.appendChild(b);
+    });
+    diasFg.appendChild(diasRow2);
+    formEl.appendChild(diasFg);
+
     var cancelBtn=mk_btn('Cancelar','transparent','#4B5563',true);cancelBtn.onclick=modalClose;footEl.appendChild(cancelBtn);
-    var saveBtn=mk_btn('Adicionar','#002B7F','#fff');saveBtn.onclick=function(){submitChk(sec);};footEl.appendChild(saveBtn);
+    if(existing&&editIdx!==undefined) {
+      var delBtn=mk_btn('Remover','#FDEAEA','#D62828');
+      delBtn.onclick=function(){removeChkItem(sec,editIdx);};
+      footEl.appendChild(delBtn);
+    }
+    var saveBtn=mk_btn(existing?'Salvar':'Adicionar','#002B7F','#fff');
+    saveBtn.onclick=function(){submitChk(sec,editIdx);};footEl.appendChild(saveBtn);
   }
 
   document.getElementById('the-modal').classList.add('open');
@@ -490,11 +551,20 @@ function submitLog(day) {
     .then(function(){return loadAll();}).then(function(){modalClose();toast('Registrado!','ok');}).catch(function(){toast('Erro','err');});
 }
 
-function submitChk(sec) {
+function submitChk(sec,editIdx) {
   var t=gv('pm-chk-txt');
   if(!t.trim()){toast('Digite o nome do item','err');return;}
-  checks[sec]=(checks[sec]||[]).concat([t.trim()]);
-  saveChecks();modalClose();renderPage();toast('Item adicionado!','ok');
+  var diasSel=[];
+  document.querySelectorAll('#modal-form .day-pill.on').forEach(function(b){diasSel.push(b.dataset.dia);});
+  var item={txt:t.trim(),dias:diasSel.join(',')};
+  if(editIdx!==undefined){
+    checks[sec][editIdx]=item;
+    toast('Item atualizado!','ok');
+  } else {
+    checks[sec]=(checks[sec]||[]).concat([item]);
+    toast('Item adicionado!','ok');
+  }
+  saveChecks();modalClose();renderPage();
 }
 
 // ══════════════════════════════════════════
@@ -518,8 +588,8 @@ function setStars(day,n) {
 }
 
 function removeChkItem(sec,idx) {
-  if(!confirm('Remover este item?'))return;
-  checks[sec].splice(idx,1);saveChecks();renderPage();
+  if(!confirm('Remover este item de todos os dias?'))return;
+  checks[sec].splice(idx,1);saveChecks();modalClose();renderPage();
 }
 
 function moveChkItem(sec,idx,dir) {
@@ -527,6 +597,11 @@ function moveChkItem(sec,idx,dir) {
   if(ni<0||ni>=arr.length)return;
   var tmp=arr[idx];arr[idx]=arr[ni];arr[ni]=tmp;
   saveChecks();renderPage();
+}
+
+// Also update dashboard checklist preview to use new format
+function getChkItemText(item) {
+  return typeof item==='string'?item:(item.txt||'');
 }
 
 // ══════════════════════════════════════════
@@ -674,10 +749,15 @@ function mkTaskItem(t,showDate) {
 }
 
 function mkChkSection(day,sec,color) {
-  var items=checks[sec]||[];
+  var allItems=checks[sec]||[];
+  // Filter items visible on this day
+  var items=allItems.map(function(item,i){return {item:item,origIdx:i};}).filter(function(x){
+    return itemVisibleOnDay(x.item,day);
+  });
   var dcs=checkState[day]||{};
   var st=(dcs[sec])||{};
-  var done=items.filter(function(_,i){return st[i];}).length;
+  // Use origIdx for state
+  var done=items.filter(function(x){return st[x.origIdx];}).length;
   var pct=items.length?Math.round(done/items.length*100):0;
   var wrap=div('');
 
@@ -691,24 +771,43 @@ function mkChkSection(day,sec,color) {
   hd.appendChild(addBtn);
   wrap.appendChild(hd);
 
-  items.forEach(function(item,i){
+  items.forEach(function(x){
+    var item=x.item, origIdx=x.origIdx;
     var row=div('chk-item');
     (function(idx){
       row.onclick=function(){toggleCheck(day,sec,idx);};
       var box=div('chk-box'+(st[idx]?' '+color:''));
       if(st[idx]){var ck=span('','color:#fff;font-size:10px;font-weight:700');ck.textContent='v';box.appendChild(ck);}
       row.appendChild(box);
-      var lbl=div('chk-lbl'+(st[idx]?' done':''),'font-size:12px');lbl.textContent=item;row.appendChild(lbl);
+      var lbl=div('chk-lbl'+(st[idx]?' done':''),'font-size:12px');
+      lbl.textContent=typeof item==='string'?item:item.txt;
+      row.appendChild(lbl);
+      // Day indicator
+      if(item.dias){
+        var dayPill=span('badge b-blue','font-size:9px');
+        var diasNomes=['','Seg','Ter','Qua','Qui','Sex'];
+        dayPill.textContent=item.dias.split(',').map(function(d){return diasNomes[d]||d;}).join(',');
+        row.appendChild(dayPill);
+      }
       // Controls
       var ctrl=div('','display:flex;gap:2px');
       ctrl.onclick=function(e){e.stopPropagation();};
-      if(i>0){var up=el('button','','background:none;border:none;color:#D4D9ED;cursor:pointer;font-size:14px;padding:0','^');up.onclick=function(){moveChkItem(sec,idx,-1);};ctrl.appendChild(up);}
-      if(i<items.length-1){var dn=el('button','','background:none;border:none;color:#D4D9ED;cursor:pointer;font-size:14px;padding:0','v');dn.onclick=function(){moveChkItem(sec,idx,1);};ctrl.appendChild(dn);}
+      // Edit button
+      var ed=el('button','','background:none;border:none;color:#9CA3AF;cursor:pointer;font-size:12px;padding:0','✎');
+      ed.onclick=function(){modalOpen('addchk',{sec:sec,editIdx:idx});};ctrl.appendChild(ed);
+      if(origIdx>0){var up=el('button','','background:none;border:none;color:#D4D9ED;cursor:pointer;font-size:14px;padding:0','^');up.onclick=function(){moveChkItem(sec,idx,-1);};ctrl.appendChild(up);}
+      if(origIdx<allItems.length-1){var dn=el('button','','background:none;border:none;color:#D4D9ED;cursor:pointer;font-size:14px;padding:0','v');dn.onclick=function(){moveChkItem(sec,idx,1);};ctrl.appendChild(dn);}
       var rm=el('button','','background:none;border:none;color:#D4D9ED;cursor:pointer;font-size:16px;padding:0;line-height:1','x');rm.onclick=function(){removeChkItem(sec,idx);};ctrl.appendChild(rm);
       row.appendChild(ctrl);
-    })(i);
+    })(origIdx);
     wrap.appendChild(row);
   });
+
+  if(!items.length){
+    var emp=div('','font-size:12px;color:#9CA3AF;text-align:center;padding:8px 0');
+    emp.textContent='Sem itens para este dia';
+    wrap.appendChild(emp);
+  }
 
   var prog=div('progress');
   var fill=div('prog-fill','width:'+pct+'%;background:'+(color==='green'?'#1A7A4A':'#002B7F'));
@@ -783,7 +882,11 @@ function buildDashboard() {
   var mp=mels.filter(function(m){return ['Identificado','Em analise','Em execucao'].indexOf(m.status)>=0;});
   var ab=checks.abertura||[];
   var abSt=((checkState[td]||{}).abertura)||{};
-  var abDone=ab.filter(function(_,i){return abSt[i];}).length;
+  var abVisible2=ab.filter(function(item){return itemVisibleOnDay(item,td);});
+  var abDone=abVisible2.filter(function(item,i){
+    var origIdx=ab.indexOf(item);
+    return abSt[origIdx];
+  }).length;
   var page=div('page');
 
   // Header
@@ -869,7 +972,8 @@ function buildDashboard() {
   var abH=div('card-head');abH.appendChild(span('card-title','Checklist de abertura'));
   var abBadge=mk_badge(abDone+'/'+ab.length,'b-gray');abH.appendChild(abBadge);abCard.appendChild(abH);
   var abB=div('card-body');
-  ab.slice(0,6).forEach(function(item,i){
+  var abVisible=ab.map(function(item,i){return{item:item,idx:i};}).filter(function(x){return itemVisibleOnDay(x.item,td);});
+  abVisible.slice(0,6).forEach(function(x){
     var row=div('chk-item');
     (function(idx){
       row.onclick=function(){toggleCheck(td,'abertura',idx);};
@@ -877,8 +981,8 @@ function buildDashboard() {
       var box=div('chk-box'+(checked?' blue':''));
       if(checked){var ck=span('','color:#fff;font-size:10px;font-weight:700');ck.textContent='v';box.appendChild(ck);}
       row.appendChild(box);
-      var lbl=div('chk-lbl'+(checked?' done':''));lbl.textContent=item;row.appendChild(lbl);
-    })(i);
+      var lbl=div('chk-lbl'+(checked?' done':''));lbl.textContent=getChkItemText(x.item);row.appendChild(lbl);
+    })(x.idx);
     abB.appendChild(row);
   });
   if(ab.length>6){var more=div('','font-size:11px;color:#9CA3AF;text-align:center;margin-top:8px');more.textContent='+'+(ab.length-6)+' itens na Rotina';abB.appendChild(more);}
