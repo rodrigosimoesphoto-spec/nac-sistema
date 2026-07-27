@@ -790,15 +790,41 @@ function mkChkSection(day,sec,color) {
         row.appendChild(dayPill);
       }
       // Controls
-      var ctrl=div('','display:flex;gap:2px');
+      var ctrl=div('','display:flex;gap:4px;align-items:center');
       ctrl.onclick=function(e){e.stopPropagation();};
       // Edit button
-      var ed=el('button','','background:none;border:none;color:#9CA3AF;cursor:pointer;font-size:12px;padding:0','✎');
+      var ed=el('button','','background:none;border:none;color:#9CA3AF;cursor:pointer;font-size:12px;padding:2px','✎');
       ed.onclick=function(){modalOpen('addchk',{sec:sec,editIdx:idx});};ctrl.appendChild(ed);
-      if(origIdx>0){var up=el('button','','background:none;border:none;color:#D4D9ED;cursor:pointer;font-size:14px;padding:0','^');up.onclick=function(){moveChkItem(sec,idx,-1);};ctrl.appendChild(up);}
-      if(origIdx<allItems.length-1){var dn=el('button','','background:none;border:none;color:#D4D9ED;cursor:pointer;font-size:14px;padding:0','v');dn.onclick=function(){moveChkItem(sec,idx,1);};ctrl.appendChild(dn);}
-      var rm=el('button','','background:none;border:none;color:#D4D9ED;cursor:pointer;font-size:16px;padding:0;line-height:1','x');rm.onclick=function(){removeChkItem(sec,idx);};ctrl.appendChild(rm);
+      var rm=el('button','','background:none;border:none;color:#D4D9ED;cursor:pointer;font-size:16px;padding:2px;line-height:1','x');rm.onclick=function(){removeChkItem(sec,idx);};ctrl.appendChild(rm);
+      // Drag handle
+      var dh=div('','color:#D4D9ED;cursor:grab;font-size:16px;padding:2px;user-select:none;-webkit-user-select:none');dh.textContent='⋮⋮';
+      dh.draggable=true;
+      dh.ondragstart=function(e){
+        e.stopPropagation();
+        e.dataTransfer.effectAllowed='move';
+        e.dataTransfer.setData('chk-sec',sec);
+        e.dataTransfer.setData('chk-idx',String(idx));
+        row.style.opacity='0.5';
+      };
+      dh.ondragend=function(){row.style.opacity='1';};
+      ctrl.appendChild(dh);
       row.appendChild(ctrl);
+      // Drop zone on row
+      row.ondragover=function(e){
+        if(e.dataTransfer.getData('chk-sec')===sec||true){e.preventDefault();row.style.borderTop='2px solid #002B7F';}
+      };
+      row.ondragleave=function(){row.style.borderTop='';};
+      row.ondrop=function(e){
+        e.preventDefault();row.style.borderTop='';
+        var fromSec=e.dataTransfer.getData('chk-sec');
+        var fromIdx=parseInt(e.dataTransfer.getData('chk-idx'));
+        if(fromSec!==sec||isNaN(fromIdx)||fromIdx===idx)return;
+        var arr=checks[sec];
+        var item2=arr.splice(fromIdx,1)[0];
+        var toIdx=idx>fromIdx?idx-1:idx;
+        arr.splice(toIdx,0,item2);
+        saveChecks();renderPage();
+      };
     })(origIdx);
     wrap.appendChild(row);
   });
