@@ -556,15 +556,22 @@ function submitChk(sec,editIdx) {
   if(!t.trim()){toast('Digite o nome do item','err');return;}
   var diasSel=[];
   document.querySelectorAll('#modal-form .day-pill.on').forEach(function(b){diasSel.push(b.dataset.dia);});
-  var item={txt:t.trim(),dias:diasSel.join(',')};
+  var diasStr=diasSel.join(',');
   if(editIdx!==undefined){
+    var existingId=checks[sec][editIdx]._id||null;
+    var item={txt:t.trim(),dias:diasStr,_id:existingId};
     checks[sec][editIdx]=item;
-    toast('Item atualizado!','ok');
+    saveChkItem(sec,item,editIdx,existingId)
+      .then(function(){saveChecks();modalClose();renderPage();toast('Item atualizado!','ok');})
+      .catch(function(){toast('Erro ao salvar','err');});
   } else {
+    var newId=uid();
+    var item={txt:t.trim(),dias:diasStr,_id:newId};
     checks[sec]=(checks[sec]||[]).concat([item]);
-    toast('Item adicionado!','ok');
+    saveChkItem(sec,item,checks[sec].length-1,newId)
+      .then(function(){saveChecks();modalClose();renderPage();toast('Item adicionado!','ok');})
+      .catch(function(){toast('Erro ao salvar','err');});
   }
-  saveChecks();modalClose();renderPage();
 }
 
 // ══════════════════════════════════════════
@@ -589,7 +596,11 @@ function setStars(day,n) {
 
 function removeChkItem(sec,idx) {
   if(!confirm('Remover este item de todos os dias?'))return;
-  checks[sec].splice(idx,1);saveChecks();modalClose();renderPage();
+  var item=checks[sec][idx];
+  var itemId=item&&item._id?item._id:null;
+  checks[sec].splice(idx,1);
+  saveChecks();modalClose();renderPage();
+  if(itemId)delChkItem(itemId).catch(function(){});
 }
 
 function moveChkItem(sec,idx,dir) {
@@ -597,6 +608,7 @@ function moveChkItem(sec,idx,dir) {
   if(ni<0||ni>=arr.length)return;
   var tmp=arr[idx];arr[idx]=arr[ni];arr[ni]=tmp;
   saveChecks();renderPage();
+  reorderChkItems(sec).catch(function(){});
 }
 
 // Also update dashboard checklist preview to use new format
@@ -631,7 +643,8 @@ function loadAll() {
     db.get('tarefas','order=criado_em.desc'),
     db.get('melhorias','order=criado_em.desc'),
     db.get('checklist_state'),
-    db.get('logs','order=criado_em.desc&limit=200')
+    db.get('logs','order=criado_em.desc&limit=200'),
+    db.get('checklist_items','order=ordem.asc,criado_em.asc')
   ]).then(function(r){
     tasks=r[0]||[]; mels=r[1]||[]; logs=r[3]||[];
     checkState={};
@@ -640,9 +653,64 @@ function loadAll() {
       if(x.secao==='stars')checkState[x.data]._stars=x.indice;
       else{if(!checkState[x.data][x.secao])checkState[x.data][x.secao]={};checkState[x.data][x.secao][x.indice]=x.concluido;}
     });
+    // Load checklist items from Supabase
+    var remoteItems=r[4]||[];
+    if(remoteItems.length>0){
+      checks={abertura:[],encerramento:[]};
+      remoteItems.forEach(function(item){
+        if(checks[item.secao]){
+          checks[item.secao].push({txt:item.texto,dias:item.dias||'',_id:item.id});
+        }
+      });
+    } else {
+      // First run — push local checks to Supabase
+      syncChecksToSupabase();
+    }
     syncOk=true;
     if(!document.getElementById('the-modal').classList.contains('open'))renderPage();
   }).catch(function(){syncOk=false;});
+}
+
+function syncChecksToSupabase() {
+  var all=[];
+  ['abertura','encerramento'].forEach(function(sec){
+    (checks[sec]||[]).forEach(function(item,i){
+      var txt=typeof item==='string'?item:item.txt;
+      var dias=typeof item==='string'?'':(item.dias||'');
+      var existingId=item._id||null;
+      all.push(db.ups('checklist_items',{
+        id:existingId||uid(),
+        secao:sec,
+        texto:txt,
+        dias:dias,
+        ordem:i
+      }));
+    });
+  });
+  return Promise.all(all);
+}
+
+function saveChkItem(sec,item,ordem,existingId) {
+  return db.ups('checklist_items',{
+    id:existingId||uid(),
+    secao:sec,
+    texto:typeof item==='string'?item:item.txt,
+    dias:typeof item==='string'?'':(item.dias||''),
+    ordem:ordem
+  });
+}
+
+function delChkItem(id) {
+  if(!id)return Promise.resolve();
+  return db.del('checklist_items',id);
+}
+
+function reorderChkItems(sec) {
+  var proms=(checks[sec]||[]).map(function(item,i){
+    if(!item._id)return Promise.resolve();
+    return db.patch('checklist_items',item._id,{ordem:i});
+  });
+  return Promise.all(proms);
 }
 
 // ══════════════════════════════════════════
@@ -824,6 +892,7 @@ function mkChkSection(day,sec,color) {
         var toIdx=idx>fromIdx?idx-1:idx;
         arr.splice(toIdx,0,item2);
         saveChecks();renderPage();
+        reorderChkItems(fromSec).catch(function(){});
       };
     })(origIdx);
     wrap.appendChild(row);
